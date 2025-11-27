@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ErrorReporter from "@/components/ErrorReporter";
 
 export const metadata: Metadata = {
   title: "Nandini Decoration - Premium Event Decoration Services",
@@ -15,7 +14,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <ErrorReporter />
         {children}
       </body>
     </html>
