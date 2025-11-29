@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Home, Info, Briefcase, Image, MessageSquare, Phone, Sparkles, Crown, Menu, X } from 'lucide-react';
+import { Home, Info, Briefcase, Image as ImageIcon, MessageSquare, Phone, Sparkles, Crown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const menuItems = [
   { id: 'home', label: 'Home', href: '#', icon: Home },
   { id: 'services', label: 'Services', href: '#services', icon: Briefcase },
-  { id: 'portfolio', label: 'Portfolio', href: '#portfolio', icon: Image },
+  { id: 'portfolio', label: 'Portfolio', href: '#portfolio', icon: ImageIcon },
   { id: 'testimonials', label: 'Testimonials', href: '#testimonials', icon: MessageSquare },
   { id: 'tribute', label: 'Offers', href: '#tribute', icon: Sparkles },
   { id: 'about', label: 'About', href: '#about', icon: Info },
@@ -170,8 +171,8 @@ export default function Navbar() {
       <nav
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
           isScrolled 
-            ? 'py-1 md:py-2 lg:py-2.5 animate-slide-down' 
-            : 'py-2 md:py-3 lg:py-4'
+            ? 'py-0 md:py-2 lg:py-2.5 animate-slide-down' 
+            : 'py-0 md:py-3 lg:py-4'
         }`}
         style={{
           background: 'transparent',
@@ -182,8 +183,8 @@ export default function Navbar() {
           width: '100%',
         }}
       >
-        <div className="container mx-auto px-2 md:px-6 lg:px-8">
-            <div className={`relative backdrop-blur-2xl border-2 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-500 ${
+        <div className="container mx-auto px-0 md:px-6 lg:px-8">
+            <div className={`relative backdrop-blur-2xl border-2 rounded-lg md:rounded-3xl shadow-2xl transition-all duration-500 ${
             isScrolled ? 'shadow-[0_0_30px_rgba(250,209,231,0.3)]' : 'shadow-[0_0_20px_rgba(250,209,231,0.2)]'
           }`}
           style={{
@@ -191,7 +192,7 @@ export default function Navbar() {
             borderColor: isScrolled ? 'rgba(250, 209, 231, 0.5)' : 'rgba(250, 209, 231, 0.4)'
           }}>
             {/* Floral Animated Border Glow */}
-            <div className="absolute -inset-[1px] rounded-2xl md:rounded-3xl opacity-30 blur-sm animate-pulse" 
+            <div className="absolute -inset-[1px] rounded-lg md:rounded-3xl opacity-30 blur-sm animate-pulse" 
               style={{
                 background: 'linear-gradient(135deg, rgba(250, 209, 231, 0.8) 0%, rgba(188, 225, 241, 0.8) 50%, rgba(250, 209, 231, 0.8) 100%)'
               }}
@@ -200,7 +201,7 @@ export default function Navbar() {
             {/* Inner Glass Layer - Removed white overlay */}
             
             {/* Shimmer Effect */}
-            <div className="absolute inset-0 rounded-2xl md:rounded-3xl overflow-hidden">
+            <div className="absolute inset-0 rounded-lg md:rounded-3xl overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shimmer" />
             </div>
             
@@ -242,25 +243,27 @@ export default function Navbar() {
               </div>
             </div>
             
-            <div className="relative flex flex-col md:flex-row items-center justify-between px-3 md:px-6 lg:px-8 py-2 md:py-2.5 lg:py-3 gap-2 md:gap-4 lg:gap-5">
-              {/* Logo with Enhanced Breathing and Royal Crown */}
-              <Link href="#" onClick={() => handleMenuClick('#', 'home')} className="flex items-center gap-1.5 md:gap-2 lg:gap-2.5 group flex-shrink-0">
+            <div className="relative flex flex-row items-center justify-between px-0 md:px-6 lg:px-8 py-0 md:py-2.5 lg:py-3 gap-0 md:gap-4 lg:gap-5">
+              {/* Logo with Enhanced Breathing and Royal Crown - Perfect Fit in Mobile Navbar */}
+              <Link href="#" onClick={() => handleMenuClick('#', 'home')} className="flex items-center justify-center group flex-shrink-0 flex-1 md:flex-none md:w-auto">
                 <div className="relative">
-                  <Crown className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-gold drop-shadow-lg group-hover:rotate-12 transition-transform duration-500" style={{ filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 0.8))' }} />
-                  <div className="absolute inset-0 bg-gold/30 blur-xl rounded-full animate-pulse" />
+                  <Image
+                    src="/assets/logo.png"
+                    alt="Nandini Decoration Logo"
+                    width={160}
+                    height={160}
+                    className="w-36 h-36 sm:w-40 sm:h-40 md:w-28 md:h-28 lg:w-32 lg:h-32 object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-500"
+                    style={{ filter: 'drop-shadow(0 0 18px rgba(251, 191, 36, 0.9))' }}
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 bg-gold/30 blur-2xl rounded-full animate-pulse scale-125" />
                 </div>
-                <h1 className="text-sm md:text-lg lg:text-xl font-bold text-white logo-shimmer cursor-pointer transition-all duration-700 group-hover:scale-105 group-hover:tracking-wider whitespace-nowrap" style={{
-                  animation: 'breathing 4s ease-in-out infinite',
-                  textShadow: '0 0 20px rgba(251, 191, 36, 0.5), 0 0 40px rgba(251, 191, 36, 0.3)'
-                }}>
-                  Nandini Decoration
-                </h1>
               </Link>
 
               {/* Mobile Hamburger */}
               <button
                 type="button"
-                className="md:hidden ml-auto inline-flex items-center justify-center rounded-full border border-white/30 text-white px-3 py-1.5 gap-2 bg-white/10 backdrop-blur hover:bg-white/20 transition"
+                className="md:hidden absolute top-0 right-0 inline-flex items-center justify-center rounded-full border border-white/30 text-white px-2 py-1.5 gap-1 bg-white/10 backdrop-blur hover:bg-white/20 transition z-50 m-1"
                 onClick={() => setIsMenuOpen((prev) => !prev)}
                 aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
               >

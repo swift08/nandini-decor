@@ -14,8 +14,6 @@ import {
   Mail, 
   MapPin,
   MessageCircle,
-  ChevronLeft,
-  ChevronRight,
   Crown,
   Gem,
   Instagram,
@@ -40,6 +38,7 @@ export default function Home() {
   const [selectedPortfolioFilter, setSelectedPortfolioFilter] = useState<string>('Weddings');
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
   const [isSlideshowPaused, setIsSlideshowPaused] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [isVisible, setIsVisible] = useState({
     about: false,
     services: false,
@@ -47,6 +46,11 @@ export default function Home() {
     testimonials: false,
     contact: false
   });
+
+  // Set mounted state on client side only
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Slideshow Images from slideshow folder - All 8 images
   const slideshowImages = [
@@ -824,18 +828,31 @@ export default function Home() {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       // Prevent default error handling to avoid showing [object Event]
       event.preventDefault();
-      if (process.env.NODE_ENV === 'development') {
-        const error = event.reason instanceof Error 
-          ? event.reason 
-          : new Error(String(event.reason || 'Unknown error'));
-        console.error('Unhandled promise rejection:', error);
+      
+      // Safely extract error message
+      try {
+        const reason = event.reason;
+        if (reason instanceof Error) {
+          // It's a proper Error object
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Unhandled promise rejection:', reason);
+          }
+        } else if (reason && typeof reason === 'object' && 'message' in reason) {
+          // It has a message property
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Unhandled promise rejection:', reason.message);
+          }
+        }
+        // If it's an Event object or other type, silently ignore
+      } catch (e) {
+        // Silently ignore any errors in error handling
       }
     };
 
     const handleError = (event: ErrorEvent) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Global error:', event.error || event.message);
-      }
+      // Prevent default error handling
+      event.preventDefault();
+      // Silently handle - don't log to avoid console spam
     };
 
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
@@ -912,48 +929,6 @@ export default function Home() {
           }}
         />
 
-        {/* Navigation Arrows - Left */}
-        <button
-          onClick={() => {
-            setCurrentHeroSlide((prev) => {
-              const newIndex = (prev - 1 + slideshowImages.length) % slideshowImages.length;
-              return newIndex;
-            });
-            setIsSlideshowPaused(true);
-            setTimeout(() => setIsSlideshowPaused(false), 3000);
-          }}
-          className="absolute left-4 md:left-8 z-30 w-12 h-12 md:w-16 md:h-16 rounded-lg backdrop-blur-md flex items-center justify-center border border-white/30 hover:border-white/60 transition-all"
-                style={{ 
-            background: 'rgba(255, 255, 255, 0.2)',
-            top: '50%',
-            transform: 'translateY(-50%)',
-          }}
-          aria-label="Previous slide"
-        >
-          <ChevronLeft className="w-6 h-6 md:w-8 md:h-8 text-white" strokeWidth={2.5} />
-        </button>
-
-        {/* Navigation Arrows - Right */}
-        <button
-          onClick={() => {
-            setCurrentHeroSlide((prev) => {
-              const newIndex = (prev + 1) % slideshowImages.length;
-              return newIndex;
-            });
-            setIsSlideshowPaused(true);
-            setTimeout(() => setIsSlideshowPaused(false), 3000);
-          }}
-          className="absolute right-4 md:right-8 z-30 w-12 h-12 md:w-16 md:h-16 rounded-lg backdrop-blur-md flex items-center justify-center border border-white/30 hover:border-white/60 transition-all"
-                   style={{ 
-            background: 'rgba(255, 255, 255, 0.2)',
-            top: '50%',
-            transform: 'translateY(-50%)',
-          }}
-          aria-label="Next slide"
-        >
-          <ChevronRight className="w-6 h-6 md:w-8 md:h-8 text-white" strokeWidth={2.5} />
-        </button>
-
         {/* Hero Content - Elegant Centered Overlay Box Style */}
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen flex items-center justify-center">
           <div className="w-full max-w-5xl">
@@ -967,7 +942,7 @@ export default function Home() {
             >
               {/* Semi-transparent white box with border - Frosted Glass Effect */}
               <div 
-                className="relative px-8 sm:px-12 md:px-16 lg:px-20 py-12 sm:py-16 md:py-20 rounded-2xl"
+                className="relative px-8 sm:px-12 md:px-16 lg:px-20 py-8 sm:py-12 md:py-16 lg:py-20 rounded-2xl"
                 style={{
                   background: 'rgba(255, 255, 255, 0.65)',
                   backdropFilter: 'blur(10px)',
@@ -976,33 +951,43 @@ export default function Home() {
                   boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
                 }}
               >
-                {/* Main Title - Elegant Serif Font - Enhanced Contrast */}
-                <h1
-                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 md:mb-8 text-center font-elegant animate-fade-in-up"
-                  style={{
-                    color: '#0a0a0a',
-                    fontFamily: "'Playfair Display', serif",
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
-                    lineHeight: '1.1',
-                    textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)',
-                    animationDelay: '0.6s',
-                    transform: 'translate3d(0, 0, 0)',
-                  }}
-                >
-                  Nandini Decorations
-                </h1>
+                {/* Decorative Divider Line Above Logo */}
+                <div className="flex items-center justify-center mb-4 md:mb-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent max-w-sm" />
+                  <div className="mx-4 w-2.5 h-2.5 rounded-full bg-gold/70" />
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent max-w-sm" />
+                </div>
 
-                {/* Subtitle Text - Enhanced Contrast */}
+                {/* Main Logo - Smaller Size */}
+                <div className="flex justify-center mb-0 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                  <div className="relative">
+                    <Image
+                      src="/assets/logo.png"
+                      alt="Nandini Decorations Logo"
+                      width={300}
+                      height={300}
+                      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-72 lg:h-72 object-contain drop-shadow-2xl mx-auto"
+                      style={{ 
+                        filter: 'drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 20px rgba(251, 191, 36, 0.4))',
+                        transform: 'translate3d(0, 0, 0)',
+                      }}
+                      priority
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 bg-gold/20 blur-2xl rounded-full animate-pulse -z-10" />
+                  </div>
+                </div>
+
+                {/* Subtitle Text - No Gap Below Logo */}
                 <p
-                  className="text-lg sm:text-xl md:text-2xl font-elegant text-center mb-8 md:mb-10 animate-fade-in-up"
+                  className="text-lg sm:text-xl md:text-2xl font-elegant text-center mb-4 md:mb-5 animate-fade-in-up"
                   style={{
                     color: '#1a1a1a',
                     fontFamily: "'Cormorant Garamond', serif",
                     lineHeight: '1.6',
                     fontWeight: 500,
                     textShadow: '0 1px 2px rgba(255, 255, 255, 0.6)',
-                    animationDelay: '0.8s',
+                    animationDelay: '0.7s',
                     transform: 'translate3d(0, 0, 0)',
                    }}
               >
@@ -1013,11 +998,11 @@ export default function Home() {
                   </span>
                 </p>
             
-                {/* CTA Button - "SHOP NOW" Style */}
+                {/* CTA Button - No Gap Below Tagline */}
                 <div
                   className="flex justify-center animate-fade-in-up"
                   style={{
-                    animationDelay: '1s',
+                    animationDelay: '0.8s',
                     transform: 'translate3d(0, 0, 0)',
                   }}
             >
@@ -1038,9 +1023,16 @@ export default function Home() {
                   </a>
                 </div>
 
+                {/* Decorative Divider Line 3 */}
+                <div className="flex items-center justify-center mt-10 md:mt-12 mb-6 md:mb-8 animate-fade-in-up" style={{ animationDelay: '1.1s' }}>
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent max-w-xs" />
+                  <div className="mx-4 w-2 h-2 rounded-full bg-gold/60" />
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent max-w-xs" />
+                </div>
+
                 {/* Stats Row - Elegant Design - Fixed Mobile, Same Desktop */}
                 <div
-                  className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8 mt-10 md:mt-12 animate-fade-in-up"
+                  className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8 animate-fade-in-up"
                   style={{
                     animationDelay: '1.2s',
                     transform: 'translate3d(0, 0, 0)',
@@ -2246,8 +2238,17 @@ export default function Home() {
                 <motion.div
                   animate={{ rotate: [0, 360] }}
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="relative"
                 >
-                  <Crown className="w-10 h-10 text-gold" />
+                  <Image
+                    src="/assets/logo.png"
+                    alt="Nandini Decoration Logo"
+                    width={50}
+                    height={50}
+                    className="w-10 h-10 md:w-12 md:h-12 object-contain rounded-full"
+                    style={{ filter: 'drop-shadow(0 0 15px rgba(251, 191, 36, 0.8))' }}
+                    unoptimized
+                  />
                 </motion.div>
                 <h3 className="text-3xl font-bold bg-gradient-to-r from-gold via-gold-light to-gold bg-clip-text text-transparent">
                   Nandini Decoration
@@ -2467,30 +2468,41 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Animated Particles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-gold rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                y: [0, -100, 0],
-                opacity: [0, 1, 0],
-                scale: [0, 1, 0],
-              }}
-              transition={{
-                duration: 3 + Math.random() * 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: Math.random() * 3,
-              }}
-            />
-          ))}
-        </div>
+        {/* Animated Particles - Client-side only to avoid hydration mismatch */}
+        {isMounted && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(20)].map((_, i) => {
+              // Generate stable random values based on index
+              const seed = i * 0.618033988749895; // Golden ratio for better distribution
+              const left = ((seed * 100) % 100);
+              const top = (((seed * 1.618) * 100) % 100);
+              const duration = 3 + ((seed * 2) % 2);
+              const delay = ((seed * 3) % 3);
+              
+              return (
+                <motion.div
+                  key={i}
+                  className="absolute w-1 h-1 bg-gold rounded-full"
+                  style={{
+                    left: `${left}%`,
+                    top: `${top}%`,
+                  }}
+                  animate={{
+                    y: [0, -100, 0],
+                    opacity: [0, 1, 0],
+                    scale: [0, 1, 0],
+                  }}
+                  transition={{
+                    duration: duration,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: delay,
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
       </footer>
 
       {/* Lightbox */}

@@ -1,19 +1,37 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 export default function FloralBackground() {
-  // Create multiple floating floral elements with advanced animations
-  const floralElements = Array.from({ length: 40 }).map((_, i) => ({
-    id: i,
-    size: Math.random() * 120 + 60,
-    left: Math.random() * 100,
-    top: Math.random() * 100,
-    delay: Math.random() * 15,
-    duration: Math.random() * 25 + 20,
-    rotation: Math.random() * 360,
-    type: Math.floor(Math.random() * 3), // 0: peony, 1: anemone, 2: bud
-  }));
+  const [floralElements, setFloralElements] = useState<Array<{
+    id: number;
+    size: number;
+    left: number;
+    top: number;
+    delay: number;
+    duration: number;
+    rotation: number;
+    type: number;
+  }>>([]);
+
+  // Generate random values only on client to avoid hydration mismatch
+  useEffect(() => {
+    const elements = Array.from({ length: 40 }).map((_, i) => {
+      const seed = i * 0.618033988749895; // Golden ratio for distribution
+      return {
+        id: i,
+        size: ((seed * 120) % 120) + 60,
+        left: (seed * 100) % 100,
+        top: ((seed * 1.618) * 100) % 100,
+        delay: ((seed * 15) % 15),
+        duration: ((seed * 25) % 25) + 20,
+        rotation: ((seed * 360) % 360),
+        type: Math.floor((seed * 3) % 3), // 0: peony, 1: anemone, 2: bud
+      };
+    });
+    setFloralElements(elements);
+  }, []);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -233,36 +251,46 @@ export default function FloralBackground() {
       ))}
       
       {/* Additional floating leaves and stems */}
-      {Array.from({ length: 25 }).map((_, i) => (
-        <motion.div
-          key={`leaf-${i}`}
-          className="absolute opacity-[0.02] md:opacity-[0.03]"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            width: `${Math.random() * 40 + 20}px`,
-            height: `${Math.random() * 60 + 30}px`,
-          }}
-          animate={{
-            y: [0, -25, -10, -25, 0],
-            x: [0, Math.sin(i * 0.5) * 20, Math.cos(i * 0.3) * 15, Math.sin(i * 0.5) * 20, 0],
-            rotate: [0, 15, -10, 15, 0],
-            scale: [1, 1.1, 0.9, 1.05, 1],
-          }}
-          transition={{
-            duration: Math.random() * 18 + 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: Math.random() * 8,
-          }}
-        >
+      {Array.from({ length: 25 }).map((_, i) => {
+        const seed = i * 0.618033988749895;
+        const left = (seed * 100) % 100;
+        const top = ((seed * 1.618) * 100) % 100;
+        const width = ((seed * 40) % 40) + 20;
+        const height = (((seed * 1.5) * 60) % 60) + 30;
+        const duration = ((seed * 18) % 18) + 12;
+        const delay = ((seed * 8) % 8);
+        
+        return (
+          <motion.div
+            key={`leaf-${i}`}
+            className="absolute opacity-[0.02] md:opacity-[0.03]"
+            style={{
+              left: `${left}%`,
+              top: `${top}%`,
+              width: `${width}px`,
+              height: `${height}px`,
+            }}
+            animate={{
+              y: [0, -25, -10, -25, 0],
+              x: [0, Math.sin(i * 0.5) * 20, Math.cos(i * 0.3) * 15, Math.sin(i * 0.5) * 20, 0],
+              rotate: [0, 15, -10, 15, 0],
+              scale: [1, 1.1, 0.9, 1.05, 1],
+            }}
+            transition={{
+              duration: duration,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: delay,
+            }}
+          >
           <svg viewBox="0 0 40 60" className="w-full h-full">
             <ellipse cx="20" cy="30" rx="12" ry="25" fill="#1e3a8a" opacity="0.3" />
             <ellipse cx="20" cy="30" rx="8" ry="18" fill="#3b82f6" opacity="0.2" />
             <line x1="20" y1="0" x2="20" y2="15" stroke="#1e40af" strokeWidth="2" opacity="0.2" />
           </svg>
         </motion.div>
-      ))}
+        );
+      })}
     </div>
   );
 }

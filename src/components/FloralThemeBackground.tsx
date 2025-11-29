@@ -98,13 +98,20 @@ export default function FloralThemeBackground() {
 
       {/* Enhanced Floating Floral Petals/Particles - More Creative */}
       {Array.from({ length: 35 }).map((_, i) => {
-        const petalSize = Math.random() * 15 + 8;
+        // Use stable seed-based values to avoid hydration mismatch
+        const seed = i * 0.618033988749895; // Golden ratio for distribution
+        const petalSize = ((seed * 15) % 15) + 8;
         const colors = [
           'radial-gradient(circle, rgba(250, 209, 231, 0.95), rgba(250, 209, 231, 0.2))',
           'radial-gradient(circle, rgba(188, 225, 241, 0.95), rgba(188, 225, 241, 0.2))',
           'radial-gradient(circle, rgba(158, 210, 201, 0.95), rgba(158, 210, 201, 0.2))',
           'radial-gradient(circle, rgba(200, 181, 255, 0.95), rgba(200, 181, 255, 0.2))',
         ];
+        const left = (seed * 100) % 100;
+        const top = ((seed * 1.618) * 100) % 100;
+        const duration = 8 + ((seed * 6) % 6);
+        const delay = ((seed * 4) % 4);
+        
         return (
           <motion.div
             key={`particle-${i}`}
@@ -113,8 +120,8 @@ export default function FloralThemeBackground() {
               width: `${petalSize}px`,
               height: `${petalSize}px`,
               background: colors[i % colors.length],
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${left}%`,
+              top: `${top}%`,
               filter: 'blur(2px)',
               opacity: 0.8,
               borderRadius: i % 2 === 0 ? '50%' : '30% 70% 70% 30% / 30% 30% 70% 70%',
@@ -127,10 +134,10 @@ export default function FloralThemeBackground() {
               rotate: [0, 180, 360, 540, 720],
             }}
             transition={{
-              duration: 8 + Math.random() * 6,
+              duration: duration,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: Math.random() * 4,
+              delay: delay,
             }}
           />
         );

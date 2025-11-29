@@ -36,9 +36,10 @@ export default function Floral3DBackground({
   };
 
   const opacity = opacityMap[intensity];
-  const primaryImage = images[0] || images[Math.floor(Math.random() * images.length)];
-  const secondaryImage = images[1] || images[Math.floor(Math.random() * images.length)];
-  const tertiaryImage = images[2] || images[Math.floor(Math.random() * images.length)];
+  // Use index-based selection instead of random to avoid hydration mismatch
+  const primaryImage = images[0] || '';
+  const secondaryImage = images.length > 1 ? images[1] : (images[0] || '');
+  const tertiaryImage = images.length > 2 ? images[2] : (images[0] || '');
 
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
