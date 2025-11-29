@@ -166,15 +166,23 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Unified Navbar for Desktop and Mobile */}
+      {/* Unified Navbar for Desktop and Mobile - Always Fixed */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
           isScrolled 
-            ? 'py-1 animate-slide-down' 
-            : 'py-2 md:py-2'
+            ? 'py-1 md:py-2 lg:py-2.5 animate-slide-down' 
+            : 'py-2 md:py-3 lg:py-4'
         }`}
+        style={{
+          background: 'transparent',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          width: '100%',
+        }}
       >
-        <div className="container mx-auto px-2 md:px-4">
+        <div className="container mx-auto px-2 md:px-6 lg:px-8">
             <div className={`relative backdrop-blur-2xl border-2 rounded-2xl md:rounded-3xl shadow-2xl transition-all duration-500 ${
             isScrolled ? 'shadow-[0_0_30px_rgba(250,209,231,0.3)]' : 'shadow-[0_0_20px_rgba(250,209,231,0.2)]'
           }`}
@@ -189,8 +197,7 @@ export default function Navbar() {
               }}
             />
             
-            {/* Inner Glass Layer */}
-            <div className="absolute inset-0 rounded-2xl md:rounded-3xl bg-gradient-to-br from-white/5 via-transparent to-white/5" />
+            {/* Inner Glass Layer - Removed white overlay */}
             
             {/* Shimmer Effect */}
             <div className="absolute inset-0 rounded-2xl md:rounded-3xl overflow-hidden">
@@ -235,14 +242,14 @@ export default function Navbar() {
               </div>
             </div>
             
-            <div className="relative flex flex-col md:flex-row items-center justify-between px-3 md:px-6 py-2 md:py-2 gap-2 md:gap-3">
+            <div className="relative flex flex-col md:flex-row items-center justify-between px-3 md:px-6 lg:px-8 py-2 md:py-2.5 lg:py-3 gap-2 md:gap-4 lg:gap-5">
               {/* Logo with Enhanced Breathing and Royal Crown */}
-              <Link href="#" onClick={() => handleMenuClick('#', 'home')} className="flex items-center gap-1.5 md:gap-2 group flex-shrink-0">
+              <Link href="#" onClick={() => handleMenuClick('#', 'home')} className="flex items-center gap-1.5 md:gap-2 lg:gap-2.5 group flex-shrink-0">
                 <div className="relative">
-                  <Crown className="w-4 h-4 md:w-5 md:h-5 text-gold drop-shadow-lg group-hover:rotate-12 transition-transform duration-500" style={{ filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 0.8))' }} />
+                  <Crown className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-gold drop-shadow-lg group-hover:rotate-12 transition-transform duration-500" style={{ filter: 'drop-shadow(0 0 10px rgba(251, 191, 36, 0.8))' }} />
                   <div className="absolute inset-0 bg-gold/30 blur-xl rounded-full animate-pulse" />
                 </div>
-                <h1 className="text-sm md:text-lg font-bold text-white logo-shimmer cursor-pointer transition-all duration-700 group-hover:scale-105 group-hover:tracking-wider whitespace-nowrap" style={{
+                <h1 className="text-sm md:text-lg lg:text-xl font-bold text-white logo-shimmer cursor-pointer transition-all duration-700 group-hover:scale-105 group-hover:tracking-wider whitespace-nowrap" style={{
                   animation: 'breathing 4s ease-in-out infinite',
                   textShadow: '0 0 20px rgba(251, 191, 36, 0.5), 0 0 40px rgba(251, 191, 36, 0.3)'
                 }}>
@@ -261,8 +268,8 @@ export default function Navbar() {
                 <span className="text-sm font-semibold">Menu</span>
               </button>
 
-              {/* Menu Items */}
-              <div className="hidden md:flex flex-nowrap items-center justify-center gap-1 md:gap-3 relative w-full md:w-auto overflow-x-auto">
+              {/* Menu Items - No Overflow, All Visible */}
+              <div className="hidden md:flex flex-nowrap items-center justify-center gap-2 md:gap-3 lg:gap-4 relative flex-1 md:flex-none">
                 {menuItems.map((item, index) => (
                   <a
                     key={item.id}
@@ -272,7 +279,7 @@ export default function Navbar() {
                       e.preventDefault();
                       handleMenuClick(item.href, item.id);
                     }}
-                    className={`relative text-white font-semibold text-xs md:text-sm transition-all duration-300 group menu-item flex items-center gap-1 md:gap-0 px-1.5 py-1 md:px-0 md:py-0 rounded-lg md:rounded-none whitespace-nowrap ${
+                    className={`relative text-white font-semibold text-xs md:text-sm lg:text-base transition-all duration-300 group menu-item flex items-center gap-1 md:gap-0 px-1.5 py-1 md:px-2 md:py-1.5 lg:px-3 lg:py-2 rounded-lg md:rounded-none whitespace-nowrap ${
                       activeSection === item.id 
                         ? 'text-gold scale-105 md:scale-105 tracking-wide bg-gold/20 md:bg-transparent' 
                         : 'hover:text-gold-light hover:scale-105 hover:bg-white/10 md:hover:bg-transparent'
@@ -311,7 +318,7 @@ export default function Navbar() {
                   e.preventDefault();
                   handleMenuClick('#contact', 'contact');
                 }}
-                className="relative px-3 md:px-5 py-1.5 md:py-2 bg-gradient-to-r from-blue-600 via-blue-500 to-gold rounded-full text-white font-bold text-xs md:text-sm shadow-2xl overflow-hidden group border-2 border-gold/50 hover:border-gold transition-all duration-500 hidden md:flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap"
+                className="relative px-3 md:px-5 lg:px-6 py-1.5 md:py-2 lg:py-2.5 bg-gradient-to-r from-blue-600 via-blue-500 to-gold rounded-full text-white font-bold text-xs md:text-sm lg:text-base shadow-2xl overflow-hidden group border-2 border-gold/50 hover:border-gold transition-all duration-500 hidden md:flex items-center gap-1.5 md:gap-2 flex-shrink-0 whitespace-nowrap"
                 style={{
                   animation: 'cta-breathing 4s ease-in-out infinite',
                   boxShadow: '0 10px 40px rgba(59, 130, 246, 0.5), 0 0 30px rgba(251, 191, 36, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.3)'
@@ -361,7 +368,7 @@ export default function Navbar() {
       </nav>
 
       {/* Spacer for fixed navbar */}
-      <div className={`transition-all duration-500 ${isScrolled ? 'h-20 md:h-16' : 'h-24 md:h-20'}`} />
+      <div className={`transition-all duration-500 ${isScrolled ? 'h-20 md:h-20 lg:h-24' : 'h-24 md:h-24 lg:h-28'}`} />
     </>
   );
 }

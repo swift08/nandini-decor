@@ -612,7 +612,9 @@ export default function HoverReceiver() {
   const handleTextChange = (element: HTMLElement) => {
     // Double-check this is still the editing element to avoid stale closures
     if (element !== editingElementRef.current) {
-      console.warn("Attempting to handle text change for non-editing element");
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("Attempting to handle text change for non-editing element");
+      }
       return;
     }
 

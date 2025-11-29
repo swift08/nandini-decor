@@ -28,12 +28,10 @@ import {
   Baby,
   Clock
 } from 'lucide-react';
-import AnimatedParticles from '@/components/AnimatedParticles';
 import ImageLightbox from '@/components/ImageLightbox';
 import Navbar from '@/components/Navbar';
-import FloralBackground from '@/components/FloralBackground';
-import RealisticFloral3D from '@/components/RealisticFloral3D';
-import FloralThemeBackground from '@/components/FloralThemeBackground';
+import ScrollProgress from '@/components/ScrollProgress';
+import Floral3DBackground from '@/components/Floral3DBackground';
 
 export default function Home() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -41,6 +39,7 @@ export default function Home() {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [selectedPortfolioFilter, setSelectedPortfolioFilter] = useState<string>('Weddings');
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+  const [isSlideshowPaused, setIsSlideshowPaused] = useState(false);
   const [isVisible, setIsVisible] = useState({
     about: false,
     services: false,
@@ -48,6 +47,66 @@ export default function Home() {
     testimonials: false,
     contact: false
   });
+
+  // Slideshow Images from slideshow folder - All 8 images
+  const slideshowImages = [
+    '/assets/slideshow/1397a1da1a651f744843f6f2723ce1be.jpg',
+    '/assets/slideshow/6d75fb4daed10738a13cb58e866173e3.jpg',
+    '/assets/slideshow/81784fe61a55530952362176f387b489.jpg',
+    '/assets/slideshow/ee442c0b634b9cf37215763290f3a399.jpg',
+    '/assets/slideshow/fe94c28172b22139550b974f1f0c4b1e.jpg',
+    '/assets/slideshow/WhatsApp Image 2025-11-27 at 5.29.00 PM.jpeg',
+    '/assets/slideshow/WhatsApp Image 2025-11-27 at 5.29.01 PM (1).jpeg',
+    '/assets/slideshow/WhatsApp Image 2025-11-27 at 5.29.01 PM.jpeg',
+  ];
+
+  // Enhanced smooth scroll optimization - Simplified
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Force smooth scroll behavior
+      document.documentElement.style.scrollBehavior = 'smooth';
+      document.body.style.scrollBehavior = 'smooth';
+      
+      // Optimize scroll performance with passive listeners
+      let ticking = false;
+      const handleScroll = () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            // Minimal scroll-based work here
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+      
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      
+      return () => {
+        window.removeEventListener('scroll', handleScroll);
+      };
+    }
+  }, []);
+
+  // Auto-advance slideshow - All images
+  useEffect(() => {
+    if (isSlideshowPaused) return;
+    
+    const interval = setInterval(() => {
+      setCurrentHeroSlide((prev) => {
+        const next = (prev + 1) % slideshowImages.length;
+        return next;
+      });
+    }, 5000); // Change slide every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [isSlideshowPaused, slideshowImages.length]);
+
+  // Ensure currentHeroSlide is always within valid range
+  useEffect(() => {
+    if (currentHeroSlide >= slideshowImages.length) {
+      setCurrentHeroSlide(0);
+    }
+  }, [currentHeroSlide, slideshowImages.length]);
 
   // Helper function to get image paths from assets
   const getImagePaths = (folderName: string): string[] => {
@@ -576,7 +635,7 @@ export default function Home() {
 
   const whatsappNumber = '+918453228622';
   const founderNumber = '+919341479989';
-  const emailAddress = 'chandanmysore77@gmail.com';
+  const emailAddress = 'Chandanmysore77@gmail.com';
   const businessHours = 'Mon – Sun · 10:30 AM – 10:00 PM IST';
   const locationLink = 'https://www.google.com/maps/place/Nandini+Lightings+and+Decorators,+528,+Theobald+Rd,+Near+PWD+Quarters,+Nazarbad,+Mysuru,+Karnataka+570010';
   const mapEmbedUrl = 'https://www.google.com/maps?q=Nandini+Lightings+and+Decorators,+528,+Theobald+Rd,+Nazarbad,+Mysuru&output=embed';
@@ -672,254 +731,454 @@ export default function Home() {
     }, 400);
   };
 
-  // Enhanced smooth scroll function for general use
+  // Enhanced smooth scroll function with better easing
   const smoothScrollTo = (elementId: string) => {
     const element = document.getElementById(elementId);
     if (element) {
       const yOffset = -120;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      const targetPosition = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       
-      window.scrollTo({
-        top: Math.max(0, y),
-        behavior: 'smooth'
-      });
+      // Use native smooth scroll if available
+      if ('scrollBehavior' in document.documentElement.style) {
+        window.scrollTo({
+          top: Math.max(0, targetPosition),
+          behavior: 'smooth'
+        });
+      } else {
+        // Fallback smooth scroll with easing
+        const start = window.pageYOffset;
+        const distance = targetPosition - start;
+        const duration = Math.min(Math.abs(distance) * 0.5, 1000);
+        let startTime: number | null = null;
+        
+        const easeInOutCubic = (t: number): number => {
+          return t < 0.5
+            ? 4 * t * t * t
+            : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        };
+        
+        const animation = (currentTime: number) => {
+          if (startTime === null) startTime = currentTime;
+          const timeElapsed = currentTime - startTime;
+          const progress = Math.min(timeElapsed / duration, 1);
+          
+          window.scrollTo(0, start + distance * easeInOutCubic(progress));
+          
+          if (progress < 1) {
+            requestAnimationFrame(animation);
+          }
+        };
+        
+        requestAnimationFrame(animation);
+      }
     }
   };
 
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    // Wait for DOM to be ready
+    let observer: IntersectionObserver | null = null;
+    
+    const timer = setTimeout(() => {
+      try {
+        const observerOptions = {
+          root: null,
+          rootMargin: '0px',
+          threshold: 0.1,
+        };
+
+        const observerCallback = (entries: IntersectionObserverEntry[]) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const sectionId = entry.target.id;
+              setIsVisible((prev) => ({
+                ...prev,
+                [sectionId]: true,
+              }));
+            }
+          });
+        };
+
+        observer = new IntersectionObserver(observerCallback, observerOptions);
+        
+        // Observe all sections
+        const sections = document.querySelectorAll('section[id]');
+        sections.forEach((section) => observer?.observe(section));
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Intersection Observer error:', error);
+        }
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (observer) {
+        observer.disconnect();
+      }
+    };
+  }, []);
+
+  // Handle unhandled promise rejections and errors
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      // Prevent default error handling to avoid showing [object Event]
+      event.preventDefault();
+      if (process.env.NODE_ENV === 'development') {
+        const error = event.reason instanceof Error 
+          ? event.reason 
+          : new Error(String(event.reason || 'Unknown error'));
+        console.error('Unhandled promise rejection:', error);
+      }
+    };
+
+    const handleError = (event: ErrorEvent) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Global error:', event.error || event.message);
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+
+  // Early return if critical data is missing
+  if (!slideshowImages || slideshowImages.length === 0) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-white relative">
-      {/* Floral Background Animation */}
-      <FloralBackground />
+    <div className="min-h-screen bg-white relative overflow-x-hidden">
+      {/* Premium Scroll Progress Indicator */}
+      <ScrollProgress />
       
       {/* Navbar */}
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center overflow-hidden z-10">
-        {/* Floral Theme Background Image with Animations - Primary Background */}
-        <FloralThemeBackground />
-        {/* Subtle gradient overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#F5FBFF]/30 z-[2]" />
-        {/* Realistic 3D Animation Effects (kept as requested) */}
-        <RealisticFloral3D />
-        <AnimatedParticles />
-
-        <div className="relative z-10 container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
-          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                duration: 1, 
-                ease: [0.25, 0.1, 0.25, 1],
-                delay: 0.2
-              }}
-              className="space-y-8"
-          >
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-md rounded-full shadow-xl text-sm font-semibold tracking-wide border-2 border-[#FAD1E7]/50" style={{ color: '#0F3D56' }}>
-                <Sparkles className="w-4 h-4" style={{ color: '#A43E77' }} />
-                Since 1993 · Nandini Lightings & Decorators · Mysuru
-              </div>
-
-            <motion.h1
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight drop-shadow-2xl"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  delay: 0.4, 
-                  duration: 0.9,
-                  ease: [0.25, 0.1, 0.25, 1]
-                }}
-                whileHover={{ 
-                  scale: 1.02,
-                  transition: { duration: 0.3 }
-                }}
-                style={{ 
-                  color: '#0F3D56',
-                  textShadow: '2px 2px 8px rgba(255, 255, 255, 0.8), 0 0 20px rgba(250, 209, 231, 0.3)'
+      {/* Hero Section - Simple Slideshow Background */}
+      <section 
+        className="relative min-h-screen flex items-center overflow-hidden z-10"
+        onMouseEnter={() => setIsSlideshowPaused(true)}
+        onMouseLeave={() => setIsSlideshowPaused(false)}
+      >
+        {/* Optimized Slideshow Background - CSS-based for smooth performance */}
+        <div className="absolute inset-0 z-[1] overflow-hidden">
+          {slideshowImages.map((image, index) => {
+            const isActive = index === (currentHeroSlide % slideshowImages.length);
+            return (
+              <div
+                key={`slideshow-${index}-${image}`}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                  isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                }`}
+                style={{
+                  transform: 'translate3d(0, 0, 0)',
+                  willChange: 'opacity',
+                  backfaceVisibility: 'hidden',
                 }}
               >
-                Nandini Decorations
-            </motion.h1>
-            
-            <motion.p
-                className="text-lg sm:text-xl md:text-2xl font-elegant font-semibold relative inline-block px-4 sm:px-6 py-3 sm:py-4 rounded-2xl"
-                   initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-                   transition={{ 
-                     delay: 0.5, 
-                     duration: 0.9,
-                     ease: [0.25, 0.1, 0.25, 1]
-                   }}
+                <Image
+                  src={image}
+                  alt={`Slideshow Image ${index + 1} of ${slideshowImages.length}`}
+                  fill
+                  priority={index < 3}
+                  quality={85}
+                  className="object-cover"
+                  sizes="100vw"
+                  unoptimized
+                  style={{
+                    transform: 'translate3d(0, 0, 0)',
+                  }}
+                />
+              </div>
+            );
+          })}
+              </div>
+
+        {/* Subtle Dark Overlay for Better Contrast */}
+        <div 
+          className="absolute inset-0 z-[2]"
+          style={{
+            background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.25) 100%)',
+          }}
+        />
+
+        {/* Navigation Arrows - Left */}
+        <button
+          onClick={() => {
+            setCurrentHeroSlide((prev) => {
+              const newIndex = (prev - 1 + slideshowImages.length) % slideshowImages.length;
+              return newIndex;
+            });
+            setIsSlideshowPaused(true);
+            setTimeout(() => setIsSlideshowPaused(false), 3000);
+          }}
+          className="absolute left-4 md:left-8 z-30 w-12 h-12 md:w-16 md:h-16 rounded-lg backdrop-blur-md flex items-center justify-center border border-white/30 hover:border-white/60 transition-all"
+                style={{ 
+            background: 'rgba(255, 255, 255, 0.2)',
+            top: '50%',
+            transform: 'translateY(-50%)',
+          }}
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="w-6 h-6 md:w-8 md:h-8 text-white" strokeWidth={2.5} />
+        </button>
+
+        {/* Navigation Arrows - Right */}
+        <button
+          onClick={() => {
+            setCurrentHeroSlide((prev) => {
+              const newIndex = (prev + 1) % slideshowImages.length;
+              return newIndex;
+            });
+            setIsSlideshowPaused(true);
+            setTimeout(() => setIsSlideshowPaused(false), 3000);
+          }}
+          className="absolute right-4 md:right-8 z-30 w-12 h-12 md:w-16 md:h-16 rounded-lg backdrop-blur-md flex items-center justify-center border border-white/30 hover:border-white/60 transition-all"
                    style={{ 
-                     color: '#0F3D56',
-                     background: 'rgba(255, 255, 255, 0.92)',
-                     backdropFilter: 'blur(12px)',
-                     boxShadow: '0 10px 30px rgba(15, 61, 86, 0.2), 0 0 0 2px rgba(250, 209, 231, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.8)'
+            background: 'rgba(255, 255, 255, 0.2)',
+            top: '50%',
+            transform: 'translateY(-50%)',
+          }}
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-6 h-6 md:w-8 md:h-8 text-white" strokeWidth={2.5} />
+        </button>
+
+        {/* Hero Content - Elegant Centered Overlay Box Style */}
+        <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen flex items-center justify-center">
+          <div className="w-full max-w-5xl">
+            {/* Elegant Semi-Transparent White Box - "The White Collection" Style */}
+            <div
+              className="relative mx-auto animate-fade-in-up"
+              style={{
+                animationDelay: '0.3s',
+                transform: 'translate3d(0, 0, 0)',
+              }}
+            >
+              {/* Semi-transparent white box with border - Frosted Glass Effect */}
+              <div 
+                className="relative px-8 sm:px-12 md:px-16 lg:px-20 py-12 sm:py-16 md:py-20 rounded-2xl"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.65)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(200, 200, 200, 0.5)',
+                  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
+                }}
+              >
+                {/* Main Title - Elegant Serif Font - Enhanced Contrast */}
+                <h1
+                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 md:mb-8 text-center font-elegant animate-fade-in-up"
+                  style={{
+                    color: '#0a0a0a',
+                    fontFamily: "'Playfair Display', serif",
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                    lineHeight: '1.1',
+                    textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)',
+                    animationDelay: '0.6s',
+                    transform: 'translate3d(0, 0, 0)',
+                  }}
+                >
+                  Nandini Decorations
+                </h1>
+
+                {/* Subtitle Text - Enhanced Contrast */}
+                <p
+                  className="text-lg sm:text-xl md:text-2xl font-elegant text-center mb-8 md:mb-10 animate-fade-in-up"
+                  style={{
+                    color: '#1a1a1a',
+                    fontFamily: "'Cormorant Garamond', serif",
+                    lineHeight: '1.6',
+                    fontWeight: 500,
+                    textShadow: '0 1px 2px rgba(255, 255, 255, 0.6)',
+                    animationDelay: '0.8s',
+                    transform: 'translate3d(0, 0, 0)',
                    }}
               >
                 Crafting moments with love since 1993.
                 <br />
+                  <span className="text-xl sm:text-2xl md:text-3xl font-semibold">
                 Where every celebration blooms into a memory.
-            </motion.p>
+                  </span>
+                </p>
             
-            <motion.div
-                className="flex flex-wrap gap-6"
-                initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
+                {/* CTA Button - "SHOP NOW" Style */}
+                <div
+                  className="flex justify-center animate-fade-in-up"
+                  style={{
+                    animationDelay: '1s',
+                    transform: 'translate3d(0, 0, 0)',
+                  }}
             >
-              <motion.a
+                  <a
                 href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                  className="group relative inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold shadow-premium-lg hover-lift glow-premium border-2 border-[#FAD1E7]/50 text-sm sm:text-base"
+                    className="inline-flex items-center gap-2 px-8 md:px-12 py-4 md:py-5 rounded-lg font-bold text-base md:text-lg uppercase tracking-wide shadow-lg transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 active:scale-95"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(250, 209, 231, 0.95) 0%, rgba(188, 225, 241, 0.95) 100%)',
-                    color: '#0F3D56'
-                  }}
-                whileHover={{ 
-                  scale: 1.05,
-                  y: -3,
-                  transition: { 
-                    duration: 0.3,
-                    ease: [0.25, 0.1, 0.25, 1]
-                  }
-                }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <motion.div
-                    className="absolute inset-0 rounded-full bg-gradient-to-r from-[#D3ECF6] via-white to-[#BCE1F1] opacity-0 group-hover:opacity-100"
-                    animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                  style={{ backgroundSize: "200% 200%" }}
-                />
-                  <MessageCircle className="relative z-10" size={24} />
-                  <span className="relative z-10">WhatsApp Chandan</span>
-                <span className="text-sm opacity-75 relative z-10">{whatsappNumber}</span>
-              </motion.a>
-              
-              <motion.a
-                  href="#services"
-                  className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-full border-2 font-semibold hover:bg-white/90 backdrop-premium hover-lift text-sm sm:text-base"
-                  style={{
-                    borderColor: 'rgba(250, 209, 231, 0.6)',
-                    color: '#0F3D56',
-                    background: 'rgba(255, 255, 255, 0.85)',
-                    backdropFilter: 'blur(10px)'
-                  }}
-                whileHover={{ 
-                  scale: 1.05,
-                  y: -3,
-                  transition: { 
-                    duration: 0.3,
-                    ease: [0.25, 0.1, 0.25, 1]
-                  }
-                }}
-                whileTap={{ scale: 0.97 }}
-              >
-                  Explore Services
-                  <ArrowRight className="w-5 h-5" />
-              </motion.a>
-            </motion.div>
-
-              <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                {legacyStats.map((stat, index) => (
-                  <motion.div
-                    key={stat.value}
-                    className="p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-lg border-2 border-[#FAD1E7]/30"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      backdropFilter: 'blur(8px)'
+                      background: '#2c2c2c',
+                      color: '#ffffff',
+                      letterSpacing: '0.1em',
+                      transform: 'translate3d(0, 0, 0)',
                     }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 + index * 0.1 }}
                   >
-                    <p className="text-xl sm:text-2xl font-bold text-[#1F5A7B]">{stat.value}</p>
-                    <p className="text-xs sm:text-sm text-[#3A6E8F]">{stat.label}</p>
-          </motion.div>
+                    <MessageCircle className="w-5 h-5" />
+                    Book Your Event
+                  </a>
+                </div>
+
+                {/* Stats Row - Elegant Design - Fixed Mobile, Same Desktop */}
+                <div
+                  className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8 mt-10 md:mt-12 animate-fade-in-up"
+                  style={{
+                    animationDelay: '1.2s',
+                    transform: 'translate3d(0, 0, 0)',
+                }}
+                >
+                {legacyStats.map((stat, index) => (
+                    <div
+                    key={stat.value}
+                      className="p-3 md:p-6 lg:p-8 rounded-xl text-center transition-all duration-300 hover:scale-105 hover:-translate-y-1 animate-fade-in-up"
+                    style={{
+                        background: 'rgba(255, 255, 255, 0.7)',
+                        border: '1px solid rgba(200, 200, 200, 0.4)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        animationDelay: `${1.3 + index * 0.1}s`,
+                        transform: 'translate3d(0, 0, 0)',
+                      }}
+                  >
+                      <p className="text-xl md:text-4xl lg:text-5xl font-bold mb-1 md:mb-2" style={{
+                        fontFamily: "'Inter', sans-serif",
+                        color: '#0a0a0a',
+                        textShadow: '0 1px 2px rgba(255, 255, 255, 0.5)',
+                      }}>{stat.value}</p>
+                      <p className="text-xs md:text-base font-medium leading-snug md:leading-tight whitespace-normal" style={{
+                        fontFamily: "'Cormorant Garamond', serif",
+                        color: '#1a1a1a',
+                        textShadow: '0 1px 1px rgba(255, 255, 255, 0.4)',
+                      }}>{stat.label}</p>
+                    </div>
                 ))}
         </div>
-            </motion.div>
-        
-        <motion.div
-              className="relative hero-3d-pavilion mt-8 lg:mt-0"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-            >
-              <div className="hero-3d-ring hidden sm:block" />
-              <div className="hero-3d-ring hero-3d-ring--inner hidden sm:block" />
-              {heroSlides.map((slide, index) => (
-                <motion.div
-                  key={`${slide.src}-${index}`}
-                  className="hero-3d-orbit"
-                  animate={{
-                    rotateY: [0, 25, -10, 0],
-                    opacity: index === currentHeroSlide ? 1 : 0,
-                    scale: index === currentHeroSlide ? 1 : 0.9,
-                  }}
-                  transition={{
-                    duration: 12,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    opacity: { duration: 0.5 },
-                    scale: { duration: 0.5 },
-                  }}
-                  style={{
-                    position: index === currentHeroSlide ? 'relative' : 'absolute',
-                    inset: 0,
-                  }}
-                >
-                  <Image
-                    src={slide.src}
-                    alt={slide.alt}
-                    fill
-                    className="object-cover rounded-2xl sm:rounded-[40px]"
-                    priority={index < 3}
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    unoptimized
-                  />
-                </motion.div>
-              ))}
-              
-              {/* Slide indicators for mobile */}
-              <div className="flex justify-center gap-2 mt-4 sm:hidden">
-                {heroSlides.slice(0, Math.min(10, heroSlides.length)).map((_, index) => (
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Elegant Carousel Indicators - Bottom Center - All Images */}
+        <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 flex-wrap justify-center max-w-full px-4">
+          {slideshowImages.map((_, index) => {
+            const activeIndex = currentHeroSlide % slideshowImages.length;
+            return (
                   <button
                     key={index}
-                    onClick={() => setCurrentHeroSlide(index)}
-                    className={`h-2 rounded-full transition-all ${
-                      index === currentHeroSlide % Math.min(10, heroSlides.length)
-                        ? 'w-8 bg-[#FAD1E7]'
-                        : 'w-2 bg-white/50'
+                onClick={() => {
+                  setCurrentHeroSlide(index);
+                  setIsSlideshowPaused(true);
+                  setTimeout(() => setIsSlideshowPaused(false), 3000);
+                }}
+                className={`h-1.5 rounded-full transition-all ${
+                  index === activeIndex
+                    ? 'w-8 bg-white'
+                    : 'w-1.5 bg-white/40'
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   />
-                ))}
+            );
+          })}
               </div>
-            </motion.div>
-          </div>
+
+        {/* Elegant Slide Counter - All Images */}
+        <div className="absolute top-6 md:top-8 right-4 md:right-8 z-20 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/20"
+          style={{
+            background: 'rgba(255, 255, 255, 0.15)',
+          }}
+        >
+          <p className="text-xs md:text-sm font-semibold text-white">
+            {(currentHeroSlide % slideshowImages.length) + 1} / {slideshowImages.length}
+          </p>
         </div>
       </section>
 
-      {/* Services Section */}
+      {/* Services Section - Creative Floral Design */}
       <section 
         id="services" 
-        className={`py-12 md:py-16 relative z-10 transition-all duration-1000 ${
+        className={`py-16 md:py-24 relative z-10 transition-all duration-1000 ${
           isVisible.services ? 'opacity-100' : 'opacity-0'
         }`}
         style={{
-          background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.98) 0%, rgba(250, 209, 231, 0.05) 50%, rgba(188, 225, 241, 0.08) 100%)'
+          position: 'relative',
         }}
       >
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-[#0F3D56] text-center">
-              <span className="text-gradient-sky">Services</span>
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(0, 3)} 
+          intensity="medium"
+        />
+        {/* Dark Blue to White Gradient Overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.15) 0%, rgba(15, 61, 86, 0.08) 30%, rgba(255, 255, 255, 0.05) 70%, rgba(255, 255, 255, 0.1) 100%)',
+            zIndex: 1,
+          }}
+        />
+
+        <div className="container mx-auto px-4 relative z-10">
+          {/* Creative Section Header */}
+          <div 
+            className={`text-center mb-12 md:mb-16 ${isVisible.services ? 'animate-fade-in-up' : 'opacity-0'}`}
+            id="services"
+            style={{ transform: 'translate3d(0, 0, 0)' }}
+          >
+            {/* Decorative Floral Icons - CSS animation for performance */}
+            <div className="flex justify-center items-center gap-4 mb-6">
+              <div className="animate-float-delay-1">
+                <Flower2 className="w-8 h-8 text-[#FAD1E7]" />
+              </div>
+              <div className="animate-float-delay-2">
+                <Flower2 className="w-10 h-10 text-[#BCE1F1]" />
+              </div>
+              <div className="animate-float-delay-3">
+                <Flower2 className="w-8 h-8 text-[#9ED2C9]" />
+              </div>
+            </div>
+
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 text-center font-elegant" style={{ 
+              textShadow: '3px 3px 6px rgba(255, 255, 255, 1), 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.5)',
+              color: '#0F3D56'
+            }}>
+              <span 
+                className="text-gradient-sky"
+                style={{
+                  background: 'linear-gradient(135deg, #0F3D56 0%, #1F5A7B 30%, #0F3D56 60%, #1F5A7B 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  backgroundSize: '200% 200%',
+                  animation: 'gradient-shift 8s ease infinite',
+                  filter: 'drop-shadow(2px 2px 4px rgba(255, 255, 255, 0.9))',
+                }}
+              >
+                Our Services
+              </span>
             </h2>
-            <p className="text-base sm:text-lg text-[#3A6E8F] max-w-3xl mx-auto px-4">
+            <p 
+              className={`text-lg sm:text-xl md:text-2xl text-[#3A6E8F] max-w-3xl mx-auto px-4 font-elegant ${isVisible.services ? 'animate-fade-in-up' : 'opacity-0'}`}
+              style={{ animationDelay: '0.3s', transform: 'translate3d(0, 0, 0)' }}
+            >
               Fully floral hero animations, kinetic props, and immersive 3D stages—crafted differently for every ritual and modern celebration.
             </p>
           </div>
@@ -929,30 +1188,17 @@ export default function Home() {
               const isBirthday = service.variant === 'birthday';
               const isHighlight = service.variant === 'highlight';
               return (
-              <motion.div
+              <div
                   key={service.title}
-                  className={`floral-service-card group floral-hover-glow floral-hover-swirl ${isHighlight ? 'floral-service-card--highlight' : ''}`}
-                initial={{ opacity: 0, y: 60, scale: 0.95 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, margin: "-50px" }}
-                  transition={{ 
-                    duration: 0.8, 
-                    delay: index * 0.08,
-                    ease: [0.25, 0.1, 0.25, 1]
-                  }}
-                  whileHover={{ 
-                    y: -12,
-                    scale: 1.03,
-                    transition: { 
-                      duration: 0.35,
-                      ease: [0.25, 0.1, 0.25, 1]
-                    }
+                  className={`floral-service-card group ${isHighlight ? 'floral-service-card--highlight' : ''} ${isVisible.services ? 'animate-fade-in-up' : 'opacity-0'}`}
+                  style={{
+                    animationDelay: `${index * 0.08}s`,
                   }}
                 >
                   <div className="floral-service-glow" />
                   
                   {/* Service Theme Image */}
-                  <div className="relative w-full h-56 mb-5 rounded-2xl overflow-hidden shadow-lg">
+                  <div className="relative w-full h-56 mb-5 rounded-2xl overflow-hidden shadow-lg" style={{ position: 'relative', zIndex: 10 }}>
                     <Image
                       src={service.image.startsWith('http') ? service.image : encodeURI(service.image)}
                       alt={service.title}
@@ -962,7 +1208,9 @@ export default function Home() {
                       priority={index < 3}
                       unoptimized={!service.image.startsWith('http')}
                       onError={(e) => {
-                        console.error('Image failed to load:', service.image);
+                        if (process.env.NODE_ENV === 'development') {
+                          console.error('Image failed to load:', service.image);
+                        }
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0F3D56]/80 via-[#0F3D56]/20 to-transparent" />
@@ -985,13 +1233,12 @@ export default function Home() {
                           <div className="gift-panel gift-panel--front" />
                           <div className="gift-panel gift-panel--right" />
                         </div>
-                    <motion.div
-                          className="gift-lid"
-                          animate={{ y: [0, -4, 0] }}
-                          transition={{ duration: 3, repeat: Infinity }}
+                    <div
+                          className="gift-lid animate-float-delay-1"
+                          style={{ transform: 'translate3d(0, 0, 0)' }}
                         >
                           <div className="gift-ribbon" />
-                    </motion.div>
+                    </div>
                     </div>
                     </div>
                   )}
@@ -1023,15 +1270,14 @@ export default function Home() {
                     type="button"
                   >
                     <span>{isHighlight ? 'Signature German prop experience' : 'View Portfolio'}</span>
-                    <motion.div
-                      className="relative"
-                      whileHover={{ x: 5 }}
-                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                    <div
+                      className="relative transition-transform duration-300 group-hover:translate-x-1"
+                      style={{ transform: 'translate3d(0, 0, 0)' }}
                     >
                       <ArrowRight className="w-4 h-4 group-hover/arrow:text-[#A43E77] transition-colors duration-300" />
-                    </motion.div>
+                    </div>
                   </button>
-                        </motion.div>
+                        </div>
               );
             })}
           </div>
@@ -1041,17 +1287,31 @@ export default function Home() {
       <section 
         id="portfolio" 
         className="py-8 md:py-16 relative overflow-hidden z-10"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(188, 225, 241, 0.08) 0%, rgba(255, 255, 255, 0.98) 50%, rgba(250, 209, 231, 0.05) 100%)'
-        }}
       >
-        <div className="container mx-auto px-4">
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(1, 4)} 
+          intensity="medium"
+        />
+        {/* Dark Blue to White Gradient Overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.15) 0%, rgba(15, 61, 86, 0.08) 30%, rgba(255, 255, 255, 0.05) 70%, rgba(255, 255, 255, 0.1) 100%)',
+            zIndex: 1,
+          }}
+        />
+        <div className="container mx-auto px-4 relative z-20">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 md:mb-3 text-[#0F3D56] text-center">
-              <span className="text-gradient-sky">Portfolio</span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 md:mb-3 text-[#0F3D56] text-center" style={{ 
+              textShadow: '3px 3px 6px rgba(255, 255, 255, 1), 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.5)',
+            }}>
+              <span className="text-gradient-sky" style={{
+                filter: 'drop-shadow(2px 2px 4px rgba(255, 255, 255, 0.9))',
+              }}>Portfolio</span>
             </h2>
             <div className="w-24 h-1 bg-gradient-gold mx-auto mb-2 md:mb-3" />
-            <p className="text-base sm:text-lg text-[#3A6E8F] max-w-2xl mx-auto text-center px-4">
+            <p className="text-base sm:text-lg text-[#0F3D56] font-semibold max-w-2xl mx-auto text-center px-4 drop-shadow-md" style={{ textShadow: '1px 1px 3px rgba(255, 255, 255, 0.9)' }}>
               Explore our stunning transformations and creative event decorations
             </p>
           </div>
@@ -1120,7 +1380,9 @@ export default function Home() {
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     unoptimized
                     onError={(e) => {
-                      console.error('Portfolio image failed to load:', image);
+                      if (process.env.NODE_ENV === 'development') {
+                        console.error('Portfolio image failed to load:', image);
+                      }
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                     }}
@@ -1154,43 +1416,40 @@ export default function Home() {
       <section 
         id="testimonials" 
         className="py-8 md:py-12 text-white relative overflow-hidden z-10"
-        style={{
-          background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.95) 0%, rgba(164, 62, 119, 0.85) 50%, rgba(15, 61, 86, 0.95) 100%)'
-        }}
       >
-        {/* Animated Floral Background Elements */}
-        <div className="absolute inset-0 opacity-15">
+        {/* Plain Background Image */}
+        <div className="absolute inset-0 overflow-hidden">
           <motion.div
-            className="absolute top-20 left-20 w-64 h-64 rounded-full blur-3xl"
-            style={{ background: 'radial-gradient(circle, rgba(250, 209, 231, 0.8), transparent)' }}
+            className="absolute inset-0"
             animate={{
-              scale: [1, 1.2, 1],
-              x: [0, 50, 0],
-              y: [0, 30, 0],
+              scale: [1, 1.02, 1],
             }}
             transition={{
-              duration: 10,
+              duration: 20,
               repeat: Infinity,
               ease: "easeInOut"
             }}
-          />
-          <motion.div
-            className="absolute bottom-20 right-20 w-96 h-96 rounded-full blur-3xl"
-            style={{ background: 'radial-gradient(circle, rgba(188, 225, 241, 0.8), transparent)' }}
-            animate={{
-              scale: [1, 1.3, 1],
-              x: [0, -30, 0],
-              y: [0, -50, 0],
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1
+          >
+            <Image
+              src="/assets/client testimonials bg.jpg"
+              alt="Testimonials Background"
+              fill
+              className="object-cover"
+              quality={90}
+              priority
+              unoptimized
+            />
+          </motion.div>
+          
+          {/* Dark Blue to White Gradient Overlay */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.25) 0%, rgba(15, 61, 86, 0.15) 30%, rgba(255, 255, 255, 0.1) 70%, rgba(255, 255, 255, 0.15) 100%)',
             }}
           />
         </div>
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 relative z-20">
           <div className="text-center mb-2 md:mb-3">
             <h2 className="text-4xl md:text-5xl font-bold mb-1 md:mb-2 text-center mx-auto">
               Client <span className="text-gradient-sky">Testimonials</span>
@@ -1222,7 +1481,8 @@ export default function Home() {
               <motion.div
                 className="absolute inset-0"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(250, 209, 231, 0.2) 0%, rgba(188, 225, 241, 0.25) 50%, rgba(250, 209, 231, 0.2) 100%)'
+                  background: 'linear-gradient(135deg, rgba(250, 209, 231, 0.2) 0%, rgba(188, 225, 241, 0.25) 50%, rgba(250, 209, 231, 0.2) 100%)',
+                  backgroundSize: "200% 200%"
                 }}
                 animate={{
                   backgroundPosition: ["0% 0%", "100% 100%"],
@@ -1232,7 +1492,6 @@ export default function Home() {
                   repeat: Infinity,
                   repeatType: "reverse"
                 }}
-                style={{ backgroundSize: "200% 200%" }}
               />
               
               <div className="relative z-10">
@@ -1312,9 +1571,20 @@ export default function Home() {
 
 
       {/* Puneeth Rajkumar Tribute Offer */}
-      <section className="py-10 md:py-14 relative z-10" id="tribute" style={{
-        background: 'linear-gradient(to bottom, rgba(250, 209, 231, 0.1) 0%, rgba(255, 255, 255, 0.98) 50%, rgba(188, 225, 241, 0.1) 100%)'
-      }}>
+      <section className="py-10 md:py-14 relative z-10" id="tribute">
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(4, 7)} 
+          intensity="medium"
+        />
+        {/* Dark Blue to White Gradient Overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.15) 0%, rgba(15, 61, 86, 0.08) 30%, rgba(255, 255, 255, 0.05) 70%, rgba(255, 255, 255, 0.1) 100%)',
+            zIndex: 1,
+          }}
+        />
         <div className="container mx-auto px-4">
           <motion.div
             className="rounded-3xl bg-gradient-to-r from-[#BCE1F1] via-white to-[#D3ECF6] p-6 md:p-10 shadow-2xl border border-[#A7D6EC]/60 relative overflow-hidden"
@@ -1363,13 +1633,15 @@ export default function Home() {
                   transition={{ duration: 0.6 }}
                 >
                   <Image
-                    src={encodeURI('/assets/PRK photo.webp')}
+                    src="/assets/PRK photo.webp"
                     alt="Puneeth Rajkumar - Power Star"
                     fill
                     className="object-cover"
                     unoptimized
                     onError={(e) => {
-                      console.error('PRK photo failed to load');
+                      if (process.env.NODE_ENV === 'development') {
+                        console.error('PRK photo failed to load');
+                      }
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0F3D56]/60 via-transparent to-transparent" />
@@ -1408,13 +1680,23 @@ export default function Home() {
       <section 
         id="about" 
         className="py-10 md:py-16 relative overflow-hidden z-10"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(188, 225, 241, 0.15) 0%, rgba(255, 255, 255, 0.98) 50%, rgba(250, 209, 231, 0.1) 100%)'
-        }}
       >
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={[slideshowImages[5], slideshowImages[0], slideshowImages[2]]} 
+          intensity="medium"
+        />
         {/* Decorative Floral Background Elements */}
         <div className="absolute top-0 left-0 w-96 h-96 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" style={{ background: 'radial-gradient(circle, rgba(250, 209, 231, 0.3), transparent)' }} />
         <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" style={{ background: 'radial-gradient(circle, rgba(188, 225, 241, 0.3), transparent)' }} />
+        {/* Dark Blue to White Gradient Overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.15) 0%, rgba(15, 61, 86, 0.08) 30%, rgba(255, 255, 255, 0.05) 70%, rgba(255, 255, 255, 0.1) 100%)',
+            zIndex: 1,
+          }}
+        />
         
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
@@ -1425,13 +1707,18 @@ export default function Home() {
             transition={{ duration: 0.8 }}
           >
             <motion.h2
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 md:mb-3 text-[#0F3D56] text-center"
+              className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2 md:mb-3 text-[#0F3D56] text-center"
+              style={{ 
+                textShadow: '3px 3px 6px rgba(255, 255, 255, 1), 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.5)',
+              }}
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              About <span className="text-gradient-sky">Our Story</span>
+              About <span className="text-gradient-sky" style={{
+                filter: 'drop-shadow(2px 2px 4px rgba(255, 255, 255, 0.9))',
+              }}>Our Story</span>
             </motion.h2>
             <motion.div
               className="w-24 h-1 bg-gradient-gold mx-auto mb-2 md:mb-3"
@@ -1441,7 +1728,8 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.4 }}
             />
             <motion.p
-              className="text-lg md:text-xl text-[#2A6082] leading-relaxed mb-4 font-elegant"
+              className="text-lg md:text-xl text-[#0F3D56] leading-relaxed mb-4 font-elegant font-semibold drop-shadow-md"
+              style={{ textShadow: '1px 1px 3px rgba(255, 255, 255, 0.9)' }}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -1450,7 +1738,8 @@ export default function Home() {
               At Nandini Decoration, every celebration blooms in shades of sky blue and celeste. Since 1993, our family-led studio has curated floral architecture, immersive lighting, and animated storytelling for Karnataka's most cherished milestones.
             </motion.p>
             <motion.p
-              className="text-lg md:text-xl text-[#2A6082] leading-relaxed font-elegant"
+              className="text-lg md:text-xl text-[#0F3D56] leading-relaxed font-elegant font-semibold drop-shadow-md"
+              style={{ textShadow: '1px 1px 3px rgba(255, 255, 255, 0.9)' }}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -1463,10 +1752,13 @@ export default function Home() {
       </section>
 
       {/* Since 1993 - Business Highlights */}
-      <section className="py-12 md:py-16 relative z-10" id="legacy" style={{
-        background: 'linear-gradient(to bottom, rgba(250, 209, 231, 0.1) 0%, rgba(188, 225, 241, 0.15) 50%, rgba(255, 255, 255, 0.98) 100%)'
-      }}>
-        <div className="container mx-auto px-4">
+      <section className="py-12 md:py-16 relative z-10" id="legacy">
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(2, 5)} 
+          intensity="medium"
+        />
+        <div className="container mx-auto px-4 relative z-20">
           <motion.div
             className="text-center max-w-3xl mx-auto mb-10"
             initial={{ opacity: 0, y: 30 }}
@@ -1478,10 +1770,10 @@ export default function Home() {
               <Crown className="w-4 h-4" />
               Since 1993 · Business Highlights
             </p>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#0F3D56] mt-6">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-[#0F3D56] mt-6 drop-shadow-lg" style={{ textShadow: '2px 2px 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 255, 255, 0.5)' }}>
               Mysuru's most trusted floral futurists.
             </h2>
-            <p className="text-lg text-[#3A6E8F] mt-4">
+            <p className="text-lg text-[#0F3D56] font-semibold mt-4 drop-shadow-md" style={{ textShadow: '1px 1px 3px rgba(255, 255, 255, 0.9)' }}>
               Nandini Lightings & Decorators blend heritage detailing with next-level animation, 3D stages, and prop innovation to deliver unforgettable experiences.
             </p>
           </motion.div>
@@ -1530,10 +1822,20 @@ export default function Home() {
       <section
         id="founder"
         className="py-12 md:py-20 relative overflow-hidden z-10"
-        style={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 209, 231, 0.08) 50%, rgba(188, 225, 241, 0.12) 100%)'
-        }}
       >
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(5, 8)} 
+          intensity="medium"
+        />
+        {/* Dark Blue to White Gradient Overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.15) 0%, rgba(15, 61, 86, 0.08) 30%, rgba(255, 255, 255, 0.05) 70%, rgba(255, 255, 255, 0.1) 100%)',
+            zIndex: 1,
+          }}
+        />
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-32 right-0 w-[28rem] h-[28rem] bg-[#BCE1F1]/45 rounded-full blur-[150px]" />
           <div className="absolute bottom-0 -left-16 w-[32rem] h-[32rem] bg-[#FFD6E8]/35 rounded-full blur-[160px]" />
@@ -1555,7 +1857,7 @@ export default function Home() {
             transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
           />
         </div>
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 relative z-20">
           <motion.div
             className="text-center max-w-2xl mx-auto mb-10"
             initial={{ opacity: 0, y: 30 }}
@@ -1567,8 +1869,8 @@ export default function Home() {
               <Heart className="w-4 h-4" />
               Founded by family · Rooted in Mysuru
             </p>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#0F3D56] mt-4">About the Founders</h2>
-            <p className="text-lg text-[#3A6E8F] mt-3">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-[#0F3D56] mt-4 drop-shadow-lg" style={{ textShadow: '2px 2px 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 255, 255, 0.5)' }}>About the Founders</h2>
+            <p className="text-lg text-[#0F3D56] font-semibold mt-3 drop-shadow-md" style={{ textShadow: '1px 1px 3px rgba(255, 255, 255, 0.9)' }}>
               Chandrashekar P (Founder) and Chandan C (Managing Director) personally blueprint each celebration with unmatched care and availability.
             </p>
         </motion.div>
@@ -1668,26 +1970,41 @@ export default function Home() {
       <section 
         id="contact" 
         className="py-8 md:py-12 relative overflow-hidden z-10"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.98) 0%, rgba(250, 209, 231, 0.08) 50%, rgba(188, 225, 241, 0.1) 100%)'
-        }}
       >
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(1, 4)} 
+          intensity="medium"
+        />
         {/* Decorative Floral Elements */}
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" style={{ background: 'radial-gradient(circle, rgba(250, 209, 231, 0.4), transparent)' }} />
         <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2" style={{ background: 'radial-gradient(circle, rgba(188, 225, 241, 0.3), transparent)' }} />
-        <div className="container mx-auto px-4">
+        {/* Dark Blue to White Gradient Overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.15) 0%, rgba(15, 61, 86, 0.08) 30%, rgba(255, 255, 255, 0.05) 70%, rgba(255, 255, 255, 0.1) 100%)',
+            zIndex: 1,
+          }}
+        />
+        <div className="container mx-auto px-4 relative z-20">
           <div className="text-center mb-4 md:mb-6">
             <motion.h2
-              className="text-4xl md:text-5xl font-bold mb-2 md:mb-3 text-[#0F3D56] text-center"
+              className="text-4xl md:text-5xl font-extrabold mb-2 md:mb-3 text-[#0F3D56] text-center"
+              style={{ 
+                textShadow: '3px 3px 6px rgba(255, 255, 255, 1), 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.5)',
+              }}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              Get In <span className="text-gradient-sky">Touch</span>
+              Get In <span className="text-gradient-sky" style={{
+                filter: 'drop-shadow(2px 2px 4px rgba(255, 255, 255, 0.9))',
+              }}>Touch</span>
             </motion.h2>
             <div className="w-24 h-1 bg-gradient-gold mx-auto mb-2 md:mb-3" />
-            <p className="text-lg text-[#3A6E8F] max-w-2xl mx-auto text-center">
+            <p className="text-lg text-[#0F3D56] font-semibold max-w-2xl mx-auto text-center drop-shadow-md" style={{ textShadow: '1px 1px 3px rgba(255, 255, 255, 0.9)' }}>
               Ready to create something extraordinary? Contact us today!
             </p>
           </div>
@@ -1803,9 +2120,11 @@ export default function Home() {
             </div>
 
             <motion.div
-              className="h-[500px] rounded-2xl overflow-hidden shadow-2xl border-4"
+              className="h-[500px] rounded-2xl overflow-hidden shadow-2xl border-4 relative z-30"
               style={{
-                borderColor: 'rgba(250, 209, 231, 0.5)'
+                borderColor: 'rgba(250, 209, 231, 0.5)',
+                backgroundColor: 'white',
+                isolation: 'isolate'
               }}
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -1817,7 +2136,7 @@ export default function Home() {
                 src={mapEmbedUrl}
                 width="100%"
                 height="100%"
-                style={{ border: 0 }}
+                style={{ border: 0, position: 'relative', zIndex: 40 }}
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
@@ -2096,7 +2415,7 @@ export default function Home() {
                   <span>{whatsappNumber}</span>
                 </motion.a>
                 <motion.a
-                  href="mailto:info@nandinidecoration.com"
+                  href="mailto:Chandanmysore77@gmail.com"
                   className="flex items-center gap-3 text-white/70 hover:text-gold transition-colors group"
                   whileHover={{ x: 5 }}
                 >
@@ -2107,7 +2426,7 @@ export default function Home() {
                   >
                     <Mail className="w-5 h-5" />
                   </motion.div>
-                  <span>info@nandinidecoration.com</span>
+                  <span>Chandanmysore77@gmail.com</span>
                 </motion.a>
                 <motion.div
                   className="flex items-center gap-3 text-white/70 group"

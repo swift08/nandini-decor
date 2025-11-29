@@ -55,7 +55,9 @@ export default function ImageLightbox({
           className="object-contain"
           unoptimized
           onError={(e) => {
-            console.error('Lightbox image failed to load:', images[currentIndex]);
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Lightbox image failed to load:', images[currentIndex]);
+            }
           }}
         />
       </div>
