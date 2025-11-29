@@ -10,6 +10,20 @@ const nextConfig: NextConfig = {
   // Production optimizations
   compress: true,
   poweredByHeader: false,
+  // Force HTTPS in production
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          },
+        ],
+      },
+    ];
+  },
   // TypeScript and ESLint - errors are now fixed
   typescript: {
     ignoreBuildErrors: false,
