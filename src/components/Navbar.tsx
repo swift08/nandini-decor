@@ -238,8 +238,8 @@ export default function Navbar() {
       <nav
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
           isScrolled 
-            ? 'py-1 md:py-2 lg:py-2.5' 
-            : 'py-1 md:py-3 lg:py-4'
+            ? 'py-0.5 md:py-1 lg:py-1.5' 
+            : 'py-0.5 md:py-1.5 lg:py-2'
         }`}
         style={{
           background: 'transparent',
@@ -312,7 +312,7 @@ export default function Navbar() {
               </div>
             </div>
             
-            <div className="relative flex flex-row items-center justify-between px-2 md:px-6 lg:px-8 py-1.5 md:py-2.5 lg:py-3 gap-2 md:gap-4 lg:gap-5">
+            <div className="relative flex flex-row items-center justify-between px-1.5 md:px-4 lg:px-6 py-1 md:py-1.5 lg:py-2 gap-1.5 md:gap-3 lg:gap-4">
               {/* Logo with Enhanced Breathing and Royal Crown - Compact on Mobile */}
               <Link href="#" onClick={() => handleMenuClick('#', 'home')} className="flex items-center justify-center group flex-shrink-0">
                 <div className="relative">
@@ -321,7 +321,7 @@ export default function Navbar() {
                     alt="Nandini Decoration Logo"
                     width={160}
                     height={160}
-                    className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-20 md:h-20 lg:w-24 lg:h-24 object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
                     style={{ filter: 'drop-shadow(0 0 12px rgba(251, 191, 36, 0.7))' }}
                     unoptimized
                     priority
@@ -356,7 +356,7 @@ export default function Navbar() {
                       e.preventDefault();
                       handleMenuClick(item.href, item.id);
                     }}
-                    className={`relative text-white font-medium text-[10px] md:text-xs lg:text-sm transition-all duration-300 group menu-item flex items-center gap-0.5 md:gap-0 px-1 py-0.5 md:px-1.5 md:py-1 lg:px-2 lg:py-1.5 rounded-lg md:rounded-none whitespace-nowrap ${
+                    className={`relative text-white font-medium text-[9px] md:text-[10px] lg:text-xs transition-all duration-300 group menu-item flex items-center gap-0.5 md:gap-0 px-0.5 py-0.5 md:px-1 md:py-0.5 lg:px-1.5 lg:py-1 rounded-lg md:rounded-none whitespace-nowrap ${
                       activeSection === item.id 
                         ? 'text-gold scale-105 md:scale-105 tracking-wide bg-gold/20 md:bg-transparent' 
                         : 'hover:text-gold-light hover:scale-105 hover:bg-white/10 md:hover:bg-transparent'
@@ -395,7 +395,7 @@ export default function Navbar() {
                   e.preventDefault();
                   handleMenuClick('#contact', 'contact');
                 }}
-                className="relative px-2 md:px-4 lg:px-5 py-1 md:py-1.5 lg:py-2 bg-gradient-to-r from-blue-600 via-blue-500 to-gold rounded-full text-white font-semibold text-[10px] md:text-xs lg:text-sm shadow-2xl overflow-hidden group border-2 border-gold/50 hover:border-gold transition-all duration-500 hidden md:flex items-center gap-1 md:gap-1.5 flex-shrink-0 whitespace-nowrap"
+                className="relative px-1.5 md:px-3 lg:px-4 py-0.5 md:py-1 lg:py-1.5 bg-gradient-to-r from-blue-600 via-blue-500 to-gold rounded-full text-white font-semibold text-[9px] md:text-[10px] lg:text-xs shadow-2xl overflow-hidden group border-2 border-gold/50 hover:border-gold transition-all duration-500 hidden md:flex items-center gap-1 md:gap-1.5 flex-shrink-0 whitespace-nowrap"
                 style={{
                   animation: 'cta-breathing 4s ease-in-out infinite',
                   boxShadow: '0 10px 40px rgba(59, 130, 246, 0.5), 0 0 30px rgba(251, 191, 36, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.3)'
@@ -450,7 +450,7 @@ export default function Navbar() {
       </nav>
 
       {/* Spacer for fixed navbar - Compact on mobile */}
-      <div className={`transition-all duration-300 ${isScrolled ? 'h-16 md:h-20 lg:h-24' : 'h-20 md:h-24 lg:h-28'}`} />
+      <div className={`transition-all duration-300 ${isScrolled ? 'h-14 md:h-16 lg:h-20' : 'h-16 md:h-20 lg:h-24'}`} />
     </>
   );
 }
