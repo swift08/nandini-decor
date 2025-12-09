@@ -907,13 +907,12 @@ export default function Home() {
               {/* Semi-transparent white box with border - Frosted Glass Effect */}
               <div 
                 className="relative px-8 sm:px-12 md:px-16 lg:px-20 py-8 sm:py-12 md:py-16 lg:py-20 rounded-2xl"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.65)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(200, 200, 200, 0.5)',
-                  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
-                }}
+                  className="hero-glass-mobile"
+                  style={{
+                    background: isMobile ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.65)',
+                    border: '1px solid rgba(200, 200, 200, 0.5)',
+                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
+                  }}
               >
                 {/* Decorative Divider Line Above Logo */}
                 <div className="flex items-center justify-center mb-4 md:mb-6 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
@@ -938,7 +937,7 @@ export default function Home() {
                       priority
                       unoptimized
                     />
-                    <div className="absolute inset-0 bg-gold/20 blur-2xl rounded-full animate-pulse -z-10" />
+                    <div className={`absolute inset-0 bg-gold/20 rounded-full animate-pulse -z-10 ${isMobile ? '' : 'blur-2xl'}`} />
                   </div>
                 </div>
 
@@ -1007,10 +1006,8 @@ export default function Home() {
                     key={stat.value}
                       className="p-3 md:p-6 lg:p-8 rounded-xl text-center transition-all duration-300 hover:scale-105 hover:-translate-y-1 animate-fade-in-up"
                     style={{
-                        background: 'rgba(255, 255, 255, 0.7)',
+                        background: isMobile ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.7)',
                         border: '1px solid rgba(200, 200, 200, 0.4)',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
                         animationDelay: `${1.3 + index * 0.1}s`,
                         transform: 'translate3d(0, 0, 0)',
                       }}
@@ -1057,7 +1054,7 @@ export default function Home() {
               </div>
 
         {/* Elegant Slide Counter - All Images */}
-        <div className="absolute top-6 md:top-8 right-4 md:right-8 z-20 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/20"
+        <div className="absolute top-6 md:top-8 right-4 md:right-8 z-20 px-3 py-1.5 rounded-full border border-white/20 slide-counter-mobile"
           style={{
             background: 'rgba(255, 255, 255, 0.15)',
           }}
@@ -1173,7 +1170,7 @@ export default function Home() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0F3D56]/80 via-[#0F3D56]/20 to-transparent" />
                     <div className="absolute top-4 right-4">
-                      <div className="p-2.5 rounded-xl bg-white/95 backdrop-blur-md shadow-lg">
+                      <div className="p-2.5 rounded-xl bg-white/95 shadow-lg service-icon-mobile">
                         <service.icon className="w-6 h-6 text-[#0F3D56]" />
                       </div>
                     </div>
@@ -1554,12 +1551,12 @@ export default function Home() {
             transition={{ duration: 0.8 }}
           >
             <motion.div
-              className="absolute -top-10 -right-10 w-40 h-40 bg-[#82C8E5]/40 rounded-full blur-3xl"
+              className={`absolute -top-10 -right-10 w-40 h-40 bg-[#82C8E5]/40 rounded-full ${isMobile ? '' : 'blur-3xl'}`}
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
             />
             <motion.div
-              className="absolute bottom-0 left-10 w-32 h-32 bg-[#FDE6F0]/70 rounded-full blur-3xl"
+              className={`absolute bottom-0 left-10 w-32 h-32 bg-[#FDE6F0]/70 rounded-full ${isMobile ? '' : 'blur-3xl'}`}
               animate={{ y: [0, 10, 0] }}
               transition={{ duration: 6, repeat: Infinity }}
             />
@@ -1647,8 +1644,8 @@ export default function Home() {
           intensity="medium"
         />
         {/* Decorative Floral Background Elements */}
-        <div className="absolute top-0 left-0 w-96 h-96 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" style={{ background: 'radial-gradient(circle, rgba(250, 209, 231, 0.3), transparent)' }} />
-        <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" style={{ background: 'radial-gradient(circle, rgba(188, 225, 241, 0.3), transparent)' }} />
+        <div className={`absolute top-0 left-0 w-96 h-96 rounded-full -translate-x-1/2 -translate-y-1/2 ${isMobile ? '' : 'blur-3xl'}`} style={{ background: 'radial-gradient(circle, rgba(250, 209, 231, 0.3), transparent)' }} />
+        <div className={`absolute bottom-0 right-0 w-96 h-96 rounded-full translate-x-1/2 translate-y-1/2 ${isMobile ? '' : 'blur-3xl'}`} style={{ background: 'radial-gradient(circle, rgba(188, 225, 241, 0.3), transparent)' }} />
         {/* Dark Blue to White Gradient Overlay */}
         <div 
           className="absolute inset-0 pointer-events-none"
@@ -1743,11 +1740,11 @@ export default function Home() {
               <motion.div
                 key={highlight.title}
                 className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl section-card-hover floral-hover-glow floral-hover-swirl"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.95)',
-                  border: '2px solid rgba(250, 209, 231, 0.4)',
-                  backdropFilter: 'blur(10px)'
-                }}
+                  className="business-highlight-card-mobile"
+                  style={{
+                    background: isMobile ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.95)',
+                    border: '2px solid rgba(250, 209, 231, 0.4)',
+                  }}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -1797,8 +1794,8 @@ export default function Home() {
           }}
         />
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-32 right-0 w-[28rem] h-[28rem] bg-[#BCE1F1]/45 rounded-full blur-[150px]" />
-          <div className="absolute bottom-0 -left-16 w-[32rem] h-[32rem] bg-[#FFD6E8]/35 rounded-full blur-[160px]" />
+          <div className={`absolute -top-32 right-0 w-[28rem] h-[28rem] bg-[#BCE1F1]/45 rounded-full ${isMobile ? '' : 'blur-[150px]'}`} />
+          <div className={`absolute bottom-0 -left-16 w-[32rem] h-[32rem] bg-[#FFD6E8]/35 rounded-full ${isMobile ? '' : 'blur-[160px]'}`} />
           <div 
             className="absolute inset-0 opacity-30"
             style={{
@@ -1807,12 +1804,12 @@ export default function Home() {
             }}
           />
           <motion.span
-            className="absolute top-16 left-10 w-16 h-16 rounded-full border border-white/70 bg-white/30 blur-sm"
+            className={`absolute top-16 left-10 w-16 h-16 rounded-full border border-white/70 bg-white/30 ${isMobile ? '' : 'blur-sm'}`}
             animate={{ y: [0, -14, 0], opacity: [0.8, 1, 0.8], rotate: [0, 8, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
           />
           <motion.span
-            className="absolute bottom-16 right-16 w-24 h-24 rounded-full border border-[#82C8E5]/70 bg-[#82C8E5]/20 blur-lg"
+            className={`absolute bottom-16 right-16 w-24 h-24 rounded-full border border-[#82C8E5]/70 bg-[#82C8E5]/20 ${isMobile ? '' : 'blur-lg'}`}
             animate={{ y: [0, 18, 0], opacity: [0.7, 1, 0.7], rotate: [0, -10, 0] }}
             transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
           />
@@ -1852,7 +1849,7 @@ export default function Home() {
                 <div className="absolute inset-0 opacity-35 pointer-events-none" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(130,200,229,0.18), transparent 55%)' }} />
                 <div className="relative grid gap-8 lg:grid-cols-[minmax(280px,360px)_1fr] items-center rounded-[38px] founder-card-clear border border-white/70 p-6 md:p-10">
                   <div className="relative h-full w-full">
-                    <div className="absolute -inset-2 rounded-[34px] bg-gradient-to-br from-[#FEEBD3] via-transparent to-[#CDE8FF] blur-2xl opacity-70" />
+                    <div className={`absolute -inset-2 rounded-[34px] bg-gradient-to-br from-[#FEEBD3] via-transparent to-[#CDE8FF] opacity-70 ${isMobile ? '' : 'blur-2xl'}`} />
                     <div className="relative rounded-[32px] overflow-hidden border border-white/60 shadow-[0_35px_65px_rgba(15,61,86,0.3)] min-h-[340px]">
                       {leader.image ? (
                         <Image
@@ -1937,8 +1934,8 @@ export default function Home() {
           intensity="medium"
         />
         {/* Decorative Floral Elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" style={{ background: 'radial-gradient(circle, rgba(250, 209, 231, 0.4), transparent)' }} />
-        <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2" style={{ background: 'radial-gradient(circle, rgba(188, 225, 241, 0.3), transparent)' }} />
+        <div className={`absolute top-0 right-0 w-96 h-96 rounded-full translate-x-1/2 -translate-y-1/2 ${isMobile ? '' : 'blur-3xl'}`} style={{ background: 'radial-gradient(circle, rgba(250, 209, 231, 0.4), transparent)' }} />
+        <div className={`absolute bottom-0 left-0 w-96 h-96 rounded-full -translate-x-1/2 translate-y-1/2 ${isMobile ? '' : 'blur-3xl'}`} style={{ background: 'radial-gradient(circle, rgba(188, 225, 241, 0.3), transparent)' }} />
         {/* Dark Blue to White Gradient Overlay */}
         <div 
           className="absolute inset-0 pointer-events-none"
@@ -2257,7 +2254,7 @@ export default function Home() {
                       </div>
                     </div>
                     <motion.div
-                      className="absolute inset-0 rounded-full bg-gradient-to-br opacity-0 group-hover:opacity-100 blur-xl"
+                      className={`absolute inset-0 rounded-full bg-gradient-to-br opacity-0 group-hover:opacity-100 ${isMobile ? '' : 'blur-xl'}`}
                       animate={{
                         scale: [1, 1.5, 1],
                         opacity: [0, 0.6, 0],
