@@ -1460,23 +1460,23 @@ export default function Home() {
                     const globalIndex = memoizedPortfolioImages.indexOf(image);
                     openLightbox(globalIndex >= 0 ? globalIndex : index);
                   }}
-                  initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                  initial={{ opacity: 0, scale: 0.98, y: 20 }}
                   whileInView={{ opacity: 1, scale: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ 
-                    duration: 0.6, 
-                    delay: index * 0.06,
-                    ease: [0.25, 0.1, 0.25, 1]
+                    duration: 0.3, 
+                    delay: index * 0.03,
+                    ease: "easeOut"
                   }}
-                  whileHover={{ 
-                    scale: 1.05,
-                    y: -5,
+                  whileHover={window.innerWidth > 768 ? { 
+                    scale: 1.03,
+                    y: -3,
                     zIndex: 10,
                     transition: { 
-                      duration: 0.4,
-                      ease: [0.25, 0.1, 0.25, 1]
+                      duration: 0.2,
+                      ease: "easeOut"
                     }
-                  }}
+                  } : {}}
                   whileTap={{ scale: 0.98 }}
                 >
                   <Image

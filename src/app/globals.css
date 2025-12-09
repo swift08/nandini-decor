@@ -1599,19 +1599,32 @@
     -webkit-backdrop-filter: blur(2px) !important;
   }
   
-  /* Optimize animations for mobile - non-blocking */
+  /* Ultra-fast animations for mobile - minimal overhead */
   * {
     /* Faster, lighter animations */
-    animation-duration: 0.2s !important;
-    transition-duration: 0.15s !important;
+    animation-duration: 0.15s !important;
+    transition-duration: 0.1s !important;
     /* Prevent animation blocking */
     animation-fill-mode: both;
+    /* Reduce animation complexity */
+    animation-timing-function: ease-out !important;
   }
   
   /* Disable expensive effects during scroll */
   body.scrolling * {
     animation-play-state: paused !important;
     transition-duration: 0s !important;
+  }
+  
+  /* Reduce framer-motion overhead on mobile */
+  [data-framer-component] {
+    will-change: auto !important;
+  }
+  
+  /* Optimize motion components */
+  [class*="motion-"] {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
   
   /* Optimize sections for mobile scrolling */
