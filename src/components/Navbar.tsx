@@ -119,8 +119,14 @@ export default function Navbar() {
     };
 
     try {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      handleScroll(); // Initial check
+      // Use passive listener for better scroll performance
+      window.addEventListener('scroll', handleScroll, { passive: true, capture: false });
+      // Defer initial check to avoid blocking
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(() => handleScroll(), { timeout: 100 });
+      } else {
+        setTimeout(() => handleScroll(), 0);
+      }
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Failed to add scroll listener:', err);

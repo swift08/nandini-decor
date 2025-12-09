@@ -1545,25 +1545,29 @@
     }
   }
 
-/* Mobile scroll optimizations - Enhanced for fast scrolling */
+/* Mobile scroll optimizations - Premium smooth experience */
 @media (max-width: 768px) {
   html {
-    /* Reduce scroll jank on mobile */
+    /* Ultra-smooth scrolling */
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
-    /* Prevent scroll-related crashes */
     overflow-x: hidden;
+    /* Prevent layout shifts */
+    overflow-y: scroll;
   }
   
   body {
-    /* Prevent scroll lag and crashes */
+    /* Premium scroll performance */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
-    /* Prevent momentum scrolling issues */
+    /* GPU acceleration */
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
-    /* Reduce repaints during scroll */
-    will-change: scroll-position;
+    /* Optimize rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent scroll blocking */
+    touch-action: pan-y;
   }
   
   /* Reduce expensive effects on mobile during scroll */
@@ -1583,20 +1587,45 @@
     -webkit-backdrop-filter: blur(2px) !important;
   }
   
-  /* Disable animations during fast scroll to prevent crashes */
+  /* Optimize animations for mobile - non-blocking */
   * {
-    /* Reduce animation complexity on mobile */
-    animation-duration: 0.3s !important;
-    transition-duration: 0.2s !important;
+    /* Faster, lighter animations */
+    animation-duration: 0.2s !important;
+    transition-duration: 0.15s !important;
+    /* Prevent animation blocking */
+    animation-fill-mode: both;
+  }
+  
+  /* Disable expensive effects during scroll */
+  body.scrolling * {
+    animation-play-state: paused !important;
+    transition-duration: 0s !important;
   }
   
   /* Optimize sections for mobile scrolling */
   section {
     /* Prevent layout shifts */
     contain: layout style paint;
-    /* Reduce repaints */
+    /* GPU acceleration */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+    /* Optimize rendering */
+    isolation: isolate;
+  }
+  
+  /* Progressive image loading - no blocking */
+  img {
+    content-visibility: auto;
+    /* Prevent layout shifts */
+    aspect-ratio: attr(width) / attr(height);
+    /* Smooth loading */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  
+  /* Remove will-change when not needed */
+  *:not(:hover):not(:focus) {
+    will-change: auto;
   }
 }
 

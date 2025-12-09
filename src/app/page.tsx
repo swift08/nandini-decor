@@ -30,7 +30,7 @@ import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
 import ScrollProgress from '@/components/ScrollProgress';
 
-// Lazy load heavy components for faster initial load
+// Lazy load heavy components for faster initial load - Premium performance
 const ImageLightbox = dynamic(() => import('@/components/ImageLightbox'), {
   ssr: false,
   loading: () => null,
@@ -57,9 +57,17 @@ export default function Home() {
     contact: false
   });
 
-  // Set mounted state on client side only
+  // Set mounted state immediately - no delay
   useEffect(() => {
-    setIsMounted(true);
+    // Use requestIdleCallback for non-blocking initialization
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => setIsMounted(true), { timeout: 0 });
+      } else {
+        // Fallback for browsers without requestIdleCallback
+        setTimeout(() => setIsMounted(true), 0);
+      }
+    }
   }, []);
 
   // Slideshow Images from slideshow folder - All 8 images
@@ -922,15 +930,7 @@ export default function Home() {
     };
   }, []);
 
-  // Early return if critical data is missing
-  if (!slideshowImages || slideshowImages.length === 0) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
+  // Never block rendering - always show content immediately
   return (
     <div className="min-h-screen bg-white relative overflow-x-hidden">
       {/* Premium Scroll Progress Indicator */}
@@ -957,7 +957,7 @@ export default function Home() {
                 }`}
                 style={{
                   transform: 'translate3d(0, 0, 0)',
-                  willChange: 'opacity',
+                  willChange: isActive ? 'opacity' : 'auto',
                   backfaceVisibility: 'hidden',
                 }}
               >
@@ -965,9 +965,9 @@ export default function Home() {
                   src={image}
                   alt={`Slideshow Image ${index + 1} of ${slideshowImages.length}`}
                   fill
-                  priority={index < 2}
-                  loading={index < 2 ? 'eager' : 'lazy'}
-                  quality={index < 2 ? 90 : 75}
+                  priority={index === 0}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  quality={index === 0 ? 90 : 70}
                   className="object-cover"
                   sizes="100vw"
                   unoptimized
@@ -1256,9 +1256,9 @@ export default function Home() {
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-700 group-hover:scale-115"
-                      priority={index < 3}
-                      loading={index < 3 ? 'eager' : 'lazy'}
-                      quality={index < 3 ? 85 : 75}
+                      priority={index === 0}
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      quality={index === 0 ? 85 : 70}
                       unoptimized={!service.image.startsWith('http')}
                       onError={(e) => {
                         if (process.env.NODE_ENV === 'development') {
