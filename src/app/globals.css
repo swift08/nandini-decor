@@ -161,13 +161,17 @@
     -webkit-tap-highlight-color: transparent;
   }
   
-  /* Performance optimizations - Only apply to sections that need it */
+  /* Premium performance optimizations */
   section {
     contain: layout style paint;
     content-visibility: auto;
     contain-intrinsic-size: auto 500px;
-    /* Prevent layout shifts during scroll */
     min-height: 1px;
+    /* GPU acceleration for smooth scrolling */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* Optimize rendering */
+    isolation: isolate;
   }
   
   /* Optimize off-screen content */
@@ -175,11 +179,19 @@
     content-visibility: auto;
   }
   
-  /* Optimize images for faster loading */
+  /* Premium image loading - no blocking */
   img {
     content-visibility: auto;
+    /* Smooth loading */
+    image-rendering: -webkit-optimize-contrast;
     /* Prevent layout shifts */
-    aspect-ratio: attr(width) / attr(height);
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Remove will-change when not actively animating */
+  *:not(:hover):not(:focus):not(.animate-*) {
+    will-change: auto !important;
   }
   
   /* Smooth transitions only for interactive elements - Optimized */
