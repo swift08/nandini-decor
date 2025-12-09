@@ -2,14 +2,21 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Optimize images for Vercel
+  // Optimize images for Vercel - Enable optimization for better mobile performance
   images: {
-    unoptimized: true, // Keep unoptimized for now due to large number of images
+    unoptimized: false, // Enable optimization for better performance
     formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  // Production optimizations
+  // Production optimizations - Enhanced for mobile
   compress: true,
   poweredByHeader: false,
+  swcMinify: true, // Use SWC minifier for better performance
+  reactStrictMode: true,
   // Force HTTPS in production
   async headers() {
     return [

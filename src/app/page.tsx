@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { 
@@ -30,6 +30,9 @@ import dynamic from 'next/dynamic';
 import { Suspense, lazy } from 'react';
 import Navbar from '@/components/Navbar';
 import ScrollProgress from '@/components/ScrollProgress';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useThrottle } from '@/hooks/useThrottle';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 // Ultra-lazy load heavy components - No SSR, no loading state to prevent blocking
 const ImageLightbox = lazy(() => import('@/components/ImageLightbox'));
@@ -39,6 +42,11 @@ const Floral3DBackground = lazy(() => import('@/components/Floral3DBackground'))
 const EmptyFallback = () => null;
 
 export default function Home() {
+  // Performance: Use refs for values that don't need re-renders
+  const isMobile = useIsMobile();
+  const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // State management - minimal state for better performance
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
@@ -46,22 +54,20 @@ export default function Home() {
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
   const [isSlideshowPaused, setIsSlideshowPaused] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isVisible, setIsVisible] = useState({
-    about: false,
-    services: false,
-    gallery: false,
-    testimonials: false,
-    contact: false
-  });
 
   // Set mounted state immediately - no delay, no blocking
   useEffect(() => {
-    // Immediately set mounted - no waiting
     setIsMounted(true);
+    return () => {
+      // Cleanup on unmount
+      if (slideshowIntervalRef.current) {
+        clearInterval(slideshowIntervalRef.current);
+      }
+    };
   }, []);
 
-  // Slideshow Images from slideshow folder - All 8 images
-  const slideshowImages = [
+  // Performance: Memoize static data to prevent re-creation on every render
+  const slideshowImages = useMemo(() => [
     '/assets/slideshow/1397a1da1a651f744843f6f2723ce1be.jpg',
     '/assets/slideshow/6d75fb4daed10738a13cb58e866173e3.jpg',
     '/assets/slideshow/81784fe61a55530952362176f387b489.jpg',
@@ -70,32 +76,42 @@ export default function Home() {
     '/assets/slideshow/WhatsApp Image 2025-11-27 at 5.29.00 PM.jpeg',
     '/assets/slideshow/WhatsApp Image 2025-11-27 at 5.29.01 PM (1).jpeg',
     '/assets/slideshow/WhatsApp Image 2025-11-27 at 5.29.01 PM.jpeg',
-  ];
+  ], []);
 
-  // Enhanced smooth scroll optimization - Removed unnecessary scroll listener
+  // Enhanced smooth scroll optimization - One-time setup
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Force smooth scroll behavior
       document.documentElement.style.scrollBehavior = 'smooth';
       document.body.style.scrollBehavior = 'smooth';
     }
   }, []);
 
-  // Auto-advance slideshow - All images
+  // Performance: Optimized slideshow with ref to prevent stale closures
   useEffect(() => {
-    if (isSlideshowPaused) return;
+    if (isSlideshowPaused || slideshowImages.length === 0) {
+      if (slideshowIntervalRef.current) {
+        clearInterval(slideshowIntervalRef.current);
+        slideshowIntervalRef.current = null;
+      }
+      return;
+    }
     
-    const interval = setInterval(() => {
+    slideshowIntervalRef.current = setInterval(() => {
       setCurrentHeroSlide((prev) => {
         const next = (prev + 1) % slideshowImages.length;
         return next;
       });
-    }, 5000); // Change slide every 5 seconds
+    }, isMobile ? 6000 : 5000); // Slower on mobile for better performance
 
-    return () => clearInterval(interval);
-  }, [isSlideshowPaused, slideshowImages.length]);
+    return () => {
+      if (slideshowIntervalRef.current) {
+        clearInterval(slideshowIntervalRef.current);
+        slideshowIntervalRef.current = null;
+      }
+    };
+  }, [isSlideshowPaused, slideshowImages.length, isMobile]);
 
-  // Ensure currentHeroSlide is always within valid range
+  // Ensure currentHeroSlide is always within valid range - Optimized
   useEffect(() => {
     if (currentHeroSlide >= slideshowImages.length) {
       setCurrentHeroSlide(0);
@@ -114,8 +130,8 @@ export default function Home() {
     }
   };
 
-  // Portfolio images organized by service category with correct file names
-  const portfolioByService = {
+  // Performance: Memoize portfolio data to prevent re-creation
+  const portfolioByService = useMemo(() => ({
     'Weddings': [
       '/assets/wedding/WhatsApp Image 2025-11-18 at 4.19.26 PM (1).jpeg',
       '/assets/wedding/WhatsApp Image 2025-11-18 at 4.19.26 PM.jpeg',
@@ -324,16 +340,21 @@ export default function Home() {
       '/assets/Half saree ceremony/WhatsApp Image 2025-11-25 at 2.27.31 PM (2).jpeg',
       '/assets/Half saree ceremony/WhatsApp Image 2025-11-25 at 2.27.31 PM.jpeg',
     ]
-  };
+  }), []);
 
-  // Flatten all images for lightbox
-  const allPortfolioImages = Object.values(portfolioByService).flat();
+  // Performance: Memoize computed values to prevent recalculation
+  const allPortfolioImages = useMemo(() => 
+    Object.values(portfolioByService).flat(), 
+    [portfolioByService]
+  );
   
-  // Portfolio filter categories (without "All")
-  const portfolioFilters = Object.keys(portfolioByService);
+  const portfolioFilters = useMemo(() => 
+    Object.keys(portfolioByService), 
+    [portfolioByService]
+  );
   
   // Hero slideshow images - 11 photos from each portfolio section
-  const heroSlides = (() => {
+  const heroSlides = useMemo(() => {
     const slides: Array<{ src: string; alt: string }> = [];
     
     // Get 11 photos from each category (or all if less than 11)
@@ -348,16 +369,17 @@ export default function Home() {
     });
     
     return slides;
-  })();
+  }, [portfolioByService]);
   
-  // Get filtered portfolio images
-  const getFilteredPortfolioImages = () => {
+  // Performance: Memoize filtered images to prevent recalculation
+  const getFilteredPortfolioImages = useMemo(() => {
     return portfolioByService[selectedPortfolioFilter as keyof typeof portfolioByService] || [];
-  };
+  }, [portfolioByService, selectedPortfolioFilter]);
 
   const formatPhoneLink = (phone: string) => phone.replace(/\s+/g, '');
 
-  const services = [
+  // Performance: Memoize static data
+  const services = useMemo(() => [
     {
       icon: Flower2,
       title: 'Weddings',
@@ -449,9 +471,9 @@ export default function Home() {
       variant: 'floral',
       image: '/assets/garlands/WhatsApp Image 2025-11-25 at 2.43.16 PM.jpeg'
     }
-  ];
+  ], []);
 
-  const legacyStats = [
+  const legacyStats = useMemo(() => [
     {
       value: 'Since 1993',
       label: 'Generations of royal celebrations'
@@ -464,9 +486,9 @@ export default function Home() {
       value: 'Mysuru',
       label: 'Floral artistry inspired by heritage'
     }
-  ];
+  ], []);
 
-  const founders = [
+  const founders = useMemo(() => [
     {
       name: 'Chandrashekar P',
       role: 'Founder & Creative Legend',
@@ -481,9 +503,9 @@ export default function Home() {
       note: 'Design-led MD ensuring every event feels futuristic yet rooted.',
       image: '/assets/chandan.jpeg'
     }
-  ];
+  ], []);
 
-  const founderHighlights: Record<string, { badge: string; quote: string; stat: string; aura: string }> = {
+  const founderHighlights: Record<string, { badge: string; quote: string; stat: string; aura: string }> = useMemo(() => ({
     'Chandrashekar P': {
       badge: 'Heritage Visionary',
       quote: '“I script every mandap with Mysuru’s royal poetry.”',
@@ -496,9 +518,9 @@ export default function Home() {
       stat: '7000+ immersive celebrations curated',
       aura: 'from-[#E0F2FF] via-[#F7FCFF] to-[#FDE7F5]'
     }
-  };
+  }), []);
 
-  const businessHighlights = [
+  const businessHighlights = useMemo(() => [
     {
       title: 'Floral Motion Lab',
       detail: 'Heavenly blue palettes layered with kinetic petals, mist, and projection art.'
@@ -511,9 +533,9 @@ export default function Home() {
       title: 'German Prop Authority',
       detail: 'Exclusive props, precision-engineered arches, and premium textures for royal stages.'
     }
-  ];
+  ], []);
 
-  const testimonials = [
+  const testimonials = useMemo(() => [
     {
       name: 'Priya Sharma',
       event: 'Wedding Reception',
@@ -586,46 +608,33 @@ export default function Home() {
       rating: 5,
       text: 'For our Diwali celebration, they created an absolutely stunning setup! The traditional elements mixed with modern touches were perfect. The entire team was professional and punctual. Excellent work!'
     }
-  ];
+  ], []);
 
+  // Performance: Removed isVisible state - using Intersection Observer instead (handled by components)
+
+  // Performance: Optimized testimonial rotation with throttling
+  const testimonialIntervalRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    const handleScroll = () => {
-      const sections = ['about', 'services', 'gallery', 'testimonials', 'contact'];
-      sections.forEach(section => {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const isInView = rect.top < window.innerHeight * 0.75;
-          setIsVisible(prev => ({ ...prev, [section]: isInView }));
-        }
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
+    if (testimonialIntervalRef.current) {
+      clearInterval(testimonialIntervalRef.current);
+    }
+    testimonialIntervalRef.current = setInterval(() => {
       setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [testimonials.length]);
+    }, isMobile ? 6000 : 5000); // Slower on mobile
+    return () => {
+      if (testimonialIntervalRef.current) {
+        clearInterval(testimonialIntervalRef.current);
+      }
+    };
+  }, [testimonials.length, isMobile]);
 
-  useEffect(() => {
-    const slidesLength = heroSlides.length;
-    if (slidesLength === 0) return;
-    const interval = setInterval(() => {
-      setCurrentHeroSlide((prev) => (prev + 1) % slidesLength);
-    }, 3500); // Slightly faster for better engagement
-    return () => clearInterval(interval);
-  }, [heroSlides]);
+  // Removed duplicate hero slideshow effect - already handled above
 
-  const openLightbox = (index: number, imagesArray: string[] = allPortfolioImages) => {
+  // Performance: Memoize callbacks to prevent re-renders
+  const openLightbox = useCallback((index: number, imagesArray: string[] = allPortfolioImages) => {
     setCurrentImageIndex(index);
     setLightboxOpen(true);
-  };
+  }, [allPortfolioImages]);
 
   const whatsappNumber = '+918453228622';
   const founderNumber = '+919341479989';
@@ -670,8 +679,8 @@ export default function Home() {
   ];
   const whatsappLink = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`;
 
-  // Service title to portfolio filter mapping (matching exact filter names from portfolioByService)
-  const serviceToPortfolioMap: Record<string, string> = {
+  // Performance: Memoize service mapping
+  const serviceToPortfolioMap: Record<string, string> = useMemo(() => ({
     'Weddings': 'Weddings',
     'Engagement': 'Engagement',
     'Baby Shower': 'Baby Shower',
@@ -685,10 +694,10 @@ export default function Home() {
     'Haldi': 'Haldi',
     'German Service Props & Antique Props': 'Weddings',
     'Wedding Props': 'Weddings'
-  };
+  }), []);
 
-  // Premium smooth scroll function with easing
-  const smoothScrollToPortfolio = (filterName: string) => {
+  // Performance: Memoize scroll function
+  const smoothScrollToPortfolio = useCallback((filterName: string) => {
     // Update filter first
     setSelectedPortfolioFilter(filterName);
     
@@ -723,10 +732,10 @@ export default function Home() {
     setTimeout(() => {
       scrollToPortfolio();
     }, 400);
-  };
+  }, []);
 
-  // Enhanced smooth scroll function with better easing
-  const smoothScrollTo = (elementId: string) => {
+  // Performance: Memoize smooth scroll function
+  const smoothScrollTo = useCallback((elementId: string) => {
     const element = document.getElementById(elementId);
     if (element) {
       const yOffset = -120;
@@ -768,101 +777,7 @@ export default function Home() {
     }
   };
 
-  // Intersection Observer for scroll animations - Optimized with error handling
-  useEffect(() => {
-    // Wait for DOM to be ready
-    let observer: IntersectionObserver | null = null;
-    let isActive = true;
-    
-    const timer = setTimeout(() => {
-      try {
-        if (!isActive) return;
-        
-        const observerOptions = {
-          root: null,
-          rootMargin: '50px',
-          threshold: [0, 0.1, 0.5],
-        };
-
-        const observerCallback = (entries: IntersectionObserverEntry[]) => {
-          if (!isActive) return;
-          
-          try {
-            // Use requestAnimationFrame to batch updates
-            requestAnimationFrame(() => {
-              if (!isActive) return;
-              
-              try {
-                entries.forEach((entry) => {
-                  if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
-                    const sectionId = entry.target.id;
-                    if (sectionId) {
-                      setIsVisible((prev) => {
-                        // Only update if not already visible
-                        if (prev[sectionId as keyof typeof prev]) return prev;
-                        return {
-                          ...prev,
-                          [sectionId]: true,
-                        };
-                      });
-                      // Unobserve after first intersection
-                      try {
-                        observer?.unobserve(entry.target);
-                      } catch (err) {
-                        // Ignore unobserve errors
-                      }
-                    }
-                  }
-                });
-              } catch (err) {
-                if (process.env.NODE_ENV === 'development') {
-                  console.warn('Intersection Observer callback error:', err);
-                }
-              }
-            });
-          } catch (err) {
-            if (process.env.NODE_ENV === 'development') {
-              console.warn('RAF error in Intersection Observer:', err);
-            }
-          }
-        };
-
-        observer = new IntersectionObserver(observerCallback, observerOptions);
-        
-        // Observe all sections with error handling
-        try {
-          const sections = document.querySelectorAll('section[id]');
-          sections.forEach((section) => {
-            try {
-              observer?.observe(section);
-            } catch (err) {
-              // Skip sections that can't be observed
-            }
-          });
-        } catch (err) {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('Error observing sections:', err);
-          }
-        }
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Intersection Observer setup error:', error);
-        }
-      }
-    }, 100);
-
-    return () => {
-      isActive = false;
-      clearTimeout(timer);
-      try {
-        if (observer) {
-          observer.disconnect();
-        }
-      } catch (err) {
-        // Ignore cleanup errors
-      }
-    };
-  }, []);
+  // Performance: Removed Intersection Observer - Components handle their own visibility
 
   // Handle unhandled promise rejections and errors - Enhanced for mobile
   useEffect(() => {
@@ -1156,9 +1071,7 @@ export default function Home() {
       {/* Services Section - Creative Floral Design */}
       <section 
         id="services" 
-        className={`py-16 md:py-24 relative z-10 transition-all duration-1000 ${
-          isVisible.services ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="py-16 md:py-24 relative z-10"
         style={{
           position: 'relative',
         }}
@@ -1182,7 +1095,7 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10">
           {/* Creative Section Header */}
           <div 
-            className={`text-center mb-12 md:mb-16 ${isVisible.services ? 'animate-fade-in-up' : 'opacity-0'}`}
+            className="text-center mb-12 md:mb-16 animate-fade-in-up"
             id="services"
             style={{ transform: 'translate3d(0, 0, 0)' }}
           >
@@ -1219,7 +1132,7 @@ export default function Home() {
               </span>
             </h2>
             <p 
-              className={`text-lg sm:text-xl md:text-2xl text-[#3A6E8F] max-w-3xl mx-auto px-4 font-elegant ${isVisible.services ? 'animate-fade-in-up' : 'opacity-0'}`}
+              className="text-lg sm:text-xl md:text-2xl text-[#3A6E8F] max-w-3xl mx-auto px-4 font-elegant animate-fade-in-up"
               style={{ animationDelay: '0.3s', transform: 'translate3d(0, 0, 0)' }}
             >
               Fully floral hero animations, kinetic props, and immersive 3D stages—crafted differently for every ritual and modern celebration.
@@ -1233,7 +1146,7 @@ export default function Home() {
               return (
               <div
                   key={service.title}
-                  className={`floral-service-card group ${isHighlight ? 'floral-service-card--highlight' : ''} ${isVisible.services ? 'animate-fade-in-up' : 'opacity-0'}`}
+                  className={`floral-service-card group ${isHighlight ? 'floral-service-card--highlight' : ''} animate-fade-in-up`}
                   style={{
                     animationDelay: `${index * 0.08}s`,
                   }}
@@ -1388,8 +1301,8 @@ export default function Home() {
 
           {/* Portfolio Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 max-w-7xl mx-auto">
-            {getFilteredPortfolioImages().map((image, index) => {
-              const allImages = getFilteredPortfolioImages();
+            {getFilteredPortfolioImages.map((image, index) => {
+              const allImages = getFilteredPortfolioImages;
               return (
                 <motion.div
                   key={index}

@@ -1632,7 +1632,8 @@
     text-rendering: optimizeLegibility;
   }
   
-  /* Optimize animations for mobile - non-blocking */
+  /* Optimize animations for mobile - non-blocking - GPU accelerated */
+  /* Removed global transform - causes layer explosion */
   * {
     /* Faster, lighter animations */
     animation-duration: 0.2s !important;
@@ -1647,15 +1648,44 @@
     transition-duration: 0s !important;
   }
   
+  /* GPU acceleration for interactive elements - only when needed */
+  button, a, [role="button"] {
+    will-change: auto;
+  }
+  
+  button:active, a:active, [role="button"]:active {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Optimize images for mobile - GPU only when animating */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  
+  img:hover {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+  }
+  
   /* Optimize sections for mobile scrolling */
   section {
     /* Prevent layout shifts */
     contain: layout style paint;
-    /* GPU acceleration */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
     /* Optimize rendering */
     isolation: isolate;
+    /* GPU acceleration only when needed */
+    will-change: auto;
+  }
+  
+  section:target,
+  section:focus-within {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
   }
   
   /* Progressive image loading - no blocking */

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Home, Info, Briefcase, Image as ImageIcon, MessageSquare, Phone, Sparkles, Crown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useThrottle } from '@/hooks/useThrottle';
 
 const menuItems = [
   { id: 'home', label: 'Home', href: '#', icon: Home },
@@ -18,105 +19,112 @@ const menuItems = [
 ];
 
 export default function Navbar() {
+  // Performance: Use refs to prevent unnecessary re-renders
+  const rafIdRef = useRef<number | null>(null);
+  const lastScrollYRef = useRef(0);
+  const lastUpdateTimeRef = useRef(0);
+  const scrollVelocityRef = useRef(0);
+  
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [activeMenuPosition, setActiveMenuPosition] = useState({ left: 0, width: 0 });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Performance: Memoize sections array
+  const sections = useMemo(() => 
+    ['home', 'services', 'portfolio', 'testimonials', 'tribute', 'about', 'legacy', 'founder', 'contact'],
+    []
+  );
 
-  useEffect(() => {
-    let rafId: number | null = null;
-    let lastScrollY = 0;
-    let lastUpdateTime = 0;
-    let scrollVelocity = 0;
-    const throttleDelay = 100; // Minimum time between updates (ms)
-    
-    const handleScroll = () => {
-      try {
-        const scrollY = window.scrollY || window.pageYOffset || 0;
-        const now = Date.now();
-        const timeDelta = now - lastUpdateTime;
-        
-        // Calculate scroll velocity
-        scrollVelocity = Math.abs(scrollY - lastScrollY) / (timeDelta || 1);
-        
-        // Skip updates if scrolling too fast (prevent crashes) - More aggressive on mobile
-        const maxVelocity = window.innerWidth < 768 ? 30 : 50;
-        if (scrollVelocity > maxVelocity && timeDelta < throttleDelay) {
-          lastScrollY = scrollY;
-          return;
-        }
-        
-        // Cancel any pending animation frame
-        if (rafId !== null) {
-          cancelAnimationFrame(rafId);
-        }
+  // Performance: Optimized scroll handler with throttling
+  const handleScroll = useCallback(() => {
+    try {
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      const now = Date.now();
+      const timeDelta = now - lastUpdateTimeRef.current;
+      const isMobile = window.innerWidth < 768;
+      
+      // Calculate scroll velocity
+      scrollVelocityRef.current = Math.abs(scrollY - lastScrollYRef.current) / (timeDelta || 1);
+      
+      // Skip updates if scrolling too fast (prevent crashes) - More aggressive on mobile
+      const maxVelocity = isMobile ? 30 : 50;
+      const throttleDelay = isMobile ? 150 : 100;
+      if (scrollVelocityRef.current > maxVelocity && timeDelta < throttleDelay) {
+        lastScrollYRef.current = scrollY;
+        return;
+      }
+      
+      // Cancel any pending animation frame
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
 
-        rafId = requestAnimationFrame(() => {
-          try {
-            setIsScrolled(scrollY > 50);
+      rafIdRef.current = requestAnimationFrame(() => {
+        try {
+          setIsScrolled(scrollY > 50);
 
-            // Only update section if not scrolling too fast
-            if (scrollVelocity < 30) {
-              // Detect active section - order matches page structure
-              const sections = ['home', 'services', 'portfolio', 'testimonials', 'tribute', 'about', 'legacy', 'founder', 'contact'];
-              const scrollPosition = scrollY + 150;
+          // Only update section if not scrolling too fast
+          if (scrollVelocityRef.current < 30) {
+            const scrollPosition = scrollY + 150;
+            let currentSection = 'home';
+            
+            // Check home section first
+            if (scrollY < 100) {
+              setActiveSection('home');
+              lastScrollYRef.current = scrollY;
+              lastUpdateTimeRef.current = now;
+              rafIdRef.current = null;
+              return;
+            }
 
-              let currentSection = 'home';
-              
-              // Check home section first
-              if (scrollY < 100) {
-                setActiveSection('home');
-                lastScrollY = scrollY;
-                lastUpdateTime = now;
-                rafId = null;
-                return;
-              }
-
-              // Check other sections - with error handling
-              try {
-                for (const section of sections) {
-                  if (section === 'home') continue;
-                  
-                  const element = document.getElementById(section);
-                  if (element) {
-                    const { offsetTop, offsetHeight } = element;
-                    if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-                      currentSection = section;
-                      break;
-                    }
-                    if (scrollPosition >= offsetTop) {
-                      currentSection = section;
-                    }
+            // Check other sections - with error handling
+            try {
+              for (const section of sections) {
+                if (section === 'home') continue;
+                
+                const element = document.getElementById(section);
+                if (element) {
+                  const { offsetTop, offsetHeight } = element;
+                  if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+                    currentSection = section;
+                    break;
+                  }
+                  if (scrollPosition >= offsetTop) {
+                    currentSection = section;
                   }
                 }
-                
-                setActiveSection(currentSection);
-              } catch (err) {
-                // Silently handle DOM errors during fast scroll
-                if (process.env.NODE_ENV === 'development') {
-                  console.warn('Section detection error:', err);
-                }
+              }
+              
+              setActiveSection(currentSection);
+            } catch (err) {
+              // Silently handle DOM errors during fast scroll
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('Section detection error:', err);
               }
             }
-            
-            lastScrollY = scrollY;
-            lastUpdateTime = now;
-            rafId = null;
-          } catch (err) {
-            // Prevent crashes from scroll handler errors
-            if (process.env.NODE_ENV === 'development') {
-              console.error('Scroll handler error:', err);
-            }
-            rafId = null;
           }
-        });
-      } catch (err) {
-        // Prevent crashes from scroll event errors
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Scroll event error:', err);
+          
+          lastScrollYRef.current = scrollY;
+          lastUpdateTimeRef.current = now;
+          rafIdRef.current = null;
+        } catch (err) {
+          // Prevent crashes from scroll handler errors
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Scroll handler error:', err);
+          }
+          rafIdRef.current = null;
         }
+      });
+    } catch (err) {
+      // Prevent crashes from scroll event errors
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Scroll event error:', err);
       }
-    };
+    }
+  }, [sections]);
+  
+  useEffect(() => {
 
     try {
       // Use passive listener for better scroll performance
@@ -136,56 +144,56 @@ export default function Navbar() {
     return () => {
       try {
         window.removeEventListener('scroll', handleScroll);
-        if (rafId !== null) {
-          cancelAnimationFrame(rafId);
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current);
         }
       } catch (err) {
         // Ignore cleanup errors
       }
     };
-  }, []);
+  }, [handleScroll]);
 
-  useEffect(() => {
-    // Update tracking ball position - improved calculation
-    const updateBallPosition = () => {
-      const activeElement = document.querySelector(`[data-menu-id="${activeSection}"]`) as HTMLElement;
-      
+  // Performance: Memoize ball position update
+  const updateBallPosition = useCallback(() => {
+    const activeElement = document.querySelector(`[data-menu-id="${activeSection}"]`) as HTMLElement;
+    
     if (activeElement) {
-        // Find the menu container (the flex container with menu items)
-        const menuContainer = activeElement.closest('.flex.flex-nowrap') as HTMLElement;
+      // Find the menu container (the flex container with menu items)
+      const menuContainer = activeElement.closest('.flex.flex-nowrap') as HTMLElement;
+      
+      if (menuContainer) {
+        const activeRect = activeElement.getBoundingClientRect();
+        const containerRect = menuContainer.getBoundingClientRect();
         
-        if (menuContainer) {
+        // Calculate center position relative to the menu container
+        const relativeLeft = activeRect.left - containerRect.left;
+        const centerX = relativeLeft + (activeRect.width / 2);
+        
+        setActiveMenuPosition({
+          left: centerX,
+          width: activeRect.width,
+        });
+      } else {
+        // Fallback: calculate relative to nav
+        const navElement = activeElement.closest('nav') as HTMLElement;
+        if (navElement) {
           const activeRect = activeElement.getBoundingClientRect();
-          const containerRect = menuContainer.getBoundingClientRect();
-          
-          // Calculate center position relative to the menu container
-          const relativeLeft = activeRect.left - containerRect.left;
-          const centerX = relativeLeft + (activeRect.width / 2);
+          const navRect = navElement.getBoundingClientRect();
+          const centerX = activeRect.left - navRect.left + (activeRect.width / 2);
           
           setActiveMenuPosition({
             left: centerX,
             width: activeRect.width,
           });
-        } else {
-          // Fallback: calculate relative to nav
-          const navElement = activeElement.closest('nav') as HTMLElement;
-          if (navElement) {
-            const activeRect = activeElement.getBoundingClientRect();
-            const navRect = navElement.getBoundingClientRect();
-            const centerX = activeRect.left - navRect.left + (activeRect.width / 2);
-            
-        setActiveMenuPosition({
-              left: centerX,
-              width: activeRect.width,
-        });
+        }
       }
+    } else {
+      // If no active element found, hide the ball
+      setActiveMenuPosition({ left: 0, width: 0 });
     }
-      } else {
-        // If no active element found, hide the ball
-        setActiveMenuPosition({ left: 0, width: 0 });
-      }
-    };
+  }, [activeSection]);
 
+  useEffect(() => {
     // Use requestAnimationFrame for smooth updates
     const rafId = requestAnimationFrame(() => {
       updateBallPosition();
@@ -194,15 +202,18 @@ export default function Navbar() {
     // Also update after a short delay to ensure DOM is ready after scroll
     const timeoutId = setTimeout(updateBallPosition, 200);
     
-    // Update on window resize
-    window.addEventListener('resize', updateBallPosition);
+    // Update on window resize - throttled
+    const throttledResize = () => {
+      requestAnimationFrame(updateBallPosition);
+    };
+    window.addEventListener('resize', throttledResize, { passive: true });
     
     return () => {
       cancelAnimationFrame(rafId);
       clearTimeout(timeoutId);
-      window.removeEventListener('resize', updateBallPosition);
+      window.removeEventListener('resize', throttledResize);
     };
-  }, [activeSection, isScrolled]);
+  }, [activeSection, isScrolled, updateBallPosition]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -215,7 +226,8 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', handleResize);
   }, [isMenuOpen]);
 
-  const handleMenuClick = (href: string, id: string) => {
+  // Performance: Memoize menu click handler
+  const handleMenuClick = useCallback((href: string, id: string) => {
     setActiveSection(id);
     setIsMenuOpen(false);
     
@@ -230,7 +242,7 @@ export default function Navbar() {
         window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
     }
-  };
+  }, []);
 
   return (
     <>
