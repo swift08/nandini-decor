@@ -976,14 +976,22 @@ export default function Home() {
     };
   }, []);
 
+  // Memoize expensive computations
+  const memoizedSlideshowImages = useMemo(() => slideshowImages, []);
+  const memoizedPortfolioImages = useMemo(() => allPortfolioImages, []);
+  
   // Never block rendering - always show content immediately
   return (
     <div className="min-h-screen bg-white relative overflow-x-hidden">
       {/* Premium Scroll Progress Indicator */}
-      <ScrollProgress />
+      <Suspense fallback={null}>
+        <ScrollProgress />
+      </Suspense>
       
       {/* Navbar */}
-      <Navbar />
+      <Suspense fallback={null}>
+        <Navbar />
+      </Suspense>
 
       {/* Hero Section - Simple Slideshow Background */}
       <section 
@@ -993,8 +1001,8 @@ export default function Home() {
       >
         {/* Optimized Slideshow Background - CSS-based for smooth performance */}
         <div className="absolute inset-0 z-[1] overflow-hidden">
-          {slideshowImages.map((image, index) => {
-            const isActive = index === (currentHeroSlide % slideshowImages.length);
+          {memoizedSlideshowImages.map((image, index) => {
+            const isActive = index === (currentHeroSlide % memoizedSlideshowImages.length);
             return (
               <div
                 key={`slideshow-${index}-${image}`}
@@ -1009,7 +1017,7 @@ export default function Home() {
               >
                 <Image
                   src={image}
-                  alt={`Slideshow Image ${index + 1} of ${slideshowImages.length}`}
+                  alt={`Slideshow Image ${index + 1} of ${memoizedSlideshowImages.length}`}
                   fill
                   priority={index === 0}
                   loading={index === 0 ? 'eager' : 'lazy'}
@@ -1176,8 +1184,8 @@ export default function Home() {
 
         {/* Elegant Carousel Indicators - Bottom Center - All Images */}
         <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 flex-wrap justify-center max-w-full px-4">
-          {slideshowImages.map((_, index) => {
-            const activeIndex = currentHeroSlide % slideshowImages.length;
+          {memoizedSlideshowImages.map((_, index) => {
+            const activeIndex = currentHeroSlide % memoizedSlideshowImages.length;
             return (
                   <button
                     key={index}
@@ -1204,7 +1212,7 @@ export default function Home() {
           }}
         >
           <p className="text-xs md:text-sm font-semibold text-white">
-            {(currentHeroSlide % slideshowImages.length) + 1} / {slideshowImages.length}
+            {(currentHeroSlide % memoizedSlideshowImages.length) + 1} / {memoizedSlideshowImages.length}
           </p>
         </div>
       </section>
@@ -1221,7 +1229,7 @@ export default function Home() {
       >
         {/* 3D Floral Background - Lazy loaded */}
         <MemoizedFloralBackground 
-          images={slideshowImages.slice(0, 3)} 
+          images={memoizedSlideshowImages.slice(0, 3)} 
           intensity="medium"
         />
         {/* Dark Blue to White Gradient Overlay */}
@@ -1389,7 +1397,7 @@ export default function Home() {
       >
         {/* 3D Floral Background - Lazy loaded */}
         <MemoizedFloralBackground 
-          images={slideshowImages.slice(1, 4)} 
+          images={memoizedSlideshowImages.slice(1, 4)} 
           intensity="medium"
         />
         {/* Dark Blue to White Gradient Overlay */}
@@ -1449,7 +1457,7 @@ export default function Home() {
                   key={index}
                   className="relative aspect-square overflow-hidden rounded-xl cursor-pointer group shadow-premium section-card-hover"
                   onClick={() => {
-                    const globalIndex = allPortfolioImages.indexOf(image);
+                    const globalIndex = memoizedPortfolioImages.indexOf(image);
                     openLightbox(globalIndex >= 0 ? globalIndex : index);
                   }}
                   initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -1675,7 +1683,7 @@ export default function Home() {
       <section className="py-10 md:py-14 relative z-10" id="tribute">
         {/* 3D Floral Background - Lazy loaded */}
         <MemoizedFloralBackground 
-          images={slideshowImages.slice(4, 7)} 
+          images={memoizedSlideshowImages.slice(4, 7)} 
           intensity="medium"
         />
         {/* Dark Blue to White Gradient Overlay */}
@@ -1784,7 +1792,7 @@ export default function Home() {
       >
         {/* 3D Floral Background - Lazy loaded */}
         <MemoizedFloralBackground 
-          images={[slideshowImages[5], slideshowImages[0], slideshowImages[2]]} 
+          images={[memoizedSlideshowImages[5], memoizedSlideshowImages[0], memoizedSlideshowImages[2]]} 
           intensity="medium"
         />
         {/* Decorative Floral Background Elements */}
@@ -1856,7 +1864,7 @@ export default function Home() {
       <section className="py-12 md:py-16 relative z-10" id="legacy">
         {/* 3D Floral Background - Lazy loaded */}
         <MemoizedFloralBackground 
-          images={slideshowImages.slice(2, 5)} 
+          images={memoizedSlideshowImages.slice(2, 5)} 
           intensity="medium"
         />
         <div className="container mx-auto px-4 relative z-20">
@@ -1926,7 +1934,7 @@ export default function Home() {
       >
         {/* 3D Floral Background - Lazy loaded */}
         <MemoizedFloralBackground 
-          images={slideshowImages.slice(5, 8)} 
+          images={memoizedSlideshowImages.slice(5, 8)} 
           intensity="medium"
         />
         {/* Dark Blue to White Gradient Overlay */}
@@ -2074,7 +2082,7 @@ export default function Home() {
       >
         {/* 3D Floral Background - Lazy loaded */}
         <MemoizedFloralBackground 
-          images={slideshowImages.slice(1, 4)} 
+          images={memoizedSlideshowImages.slice(1, 4)} 
           intensity="medium"
         />
         {/* Decorative Floral Elements */}
@@ -2616,13 +2624,15 @@ export default function Home() {
 
       {/* Lightbox */}
       {lightboxOpen && (
-        <ImageLightbox
-          images={allPortfolioImages}
-          currentIndex={currentImageIndex}
-          onClose={() => setLightboxOpen(false)}
-          onNext={() => setCurrentImageIndex((prev) => (prev + 1) % allPortfolioImages.length)}
-          onPrev={() => setCurrentImageIndex((prev) => (prev - 1 + allPortfolioImages.length) % allPortfolioImages.length)}
-        />
+        <Suspense fallback={null}>
+          <ImageLightbox
+            images={memoizedPortfolioImages}
+            currentIndex={currentImageIndex}
+            onClose={() => setLightboxOpen(false)}
+            onNext={() => setCurrentImageIndex((prev) => (prev + 1) % memoizedPortfolioImages.length)}
+            onPrev={() => setCurrentImageIndex((prev) => (prev - 1 + memoizedPortfolioImages.length) % memoizedPortfolioImages.length)}
+          />
+        </Suspense>
       )}
 
       {/* Floating WhatsApp Button */}
