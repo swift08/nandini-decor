@@ -26,10 +26,20 @@ import {
   Baby,
   Clock
 } from 'lucide-react';
-import ImageLightbox from '@/components/ImageLightbox';
+import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
 import ScrollProgress from '@/components/ScrollProgress';
-import Floral3DBackground from '@/components/Floral3DBackground';
+
+// Lazy load heavy components for faster initial load
+const ImageLightbox = dynamic(() => import('@/components/ImageLightbox'), {
+  ssr: false,
+  loading: () => null,
+});
+
+const Floral3DBackground = dynamic(() => import('@/components/Floral3DBackground'), {
+  ssr: false,
+  loading: () => null,
+});
 
 export default function Home() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -955,8 +965,9 @@ export default function Home() {
                   src={image}
                   alt={`Slideshow Image ${index + 1} of ${slideshowImages.length}`}
                   fill
-                  priority={index < 3}
-                  quality={85}
+                  priority={index < 2}
+                  loading={index < 2 ? 'eager' : 'lazy'}
+                  quality={index < 2 ? 90 : 75}
                   className="object-cover"
                   sizes="100vw"
                   unoptimized
@@ -1246,6 +1257,8 @@ export default function Home() {
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-700 group-hover:scale-115"
                       priority={index < 3}
+                      loading={index < 3 ? 'eager' : 'lazy'}
+                      quality={index < 3 ? 85 : 75}
                       unoptimized={!service.image.startsWith('http')}
                       onError={(e) => {
                         if (process.env.NODE_ENV === 'development') {
@@ -1418,6 +1431,8 @@ export default function Home() {
                     fill
                     className="object-cover group-hover:scale-125 transition-transform duration-700 ease-out"
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    loading="lazy"
+                    quality={75}
                     unoptimized
                     onError={(e) => {
                       if (process.env.NODE_ENV === 'development') {

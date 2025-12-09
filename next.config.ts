@@ -34,6 +34,15 @@ const nextConfig: NextConfig = {
   // Experimental features to fix chunk loading issues
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
+    // Optimize CSS loading
+    optimizeCss: true,
+  },
+  // Compiler optimizations
+  compiler: {
+    // Remove console.log in production
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
   },
   // Webpack configuration - minimal to avoid chunk loading issues
   webpack: (config, { isServer }) => {

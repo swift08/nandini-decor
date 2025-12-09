@@ -39,8 +39,9 @@ export default function Navbar() {
         // Calculate scroll velocity
         scrollVelocity = Math.abs(scrollY - lastScrollY) / (timeDelta || 1);
         
-        // Skip updates if scrolling too fast (prevent crashes)
-        if (scrollVelocity > 50 && timeDelta < throttleDelay) {
+        // Skip updates if scrolling too fast (prevent crashes) - More aggressive on mobile
+        const maxVelocity = window.innerWidth < 768 ? 30 : 50;
+        if (scrollVelocity > maxVelocity && timeDelta < throttleDelay) {
           lastScrollY = scrollY;
           return;
         }

@@ -166,11 +166,20 @@
     contain: layout style paint;
     content-visibility: auto;
     contain-intrinsic-size: auto 500px;
+    /* Prevent layout shifts during scroll */
+    min-height: 1px;
   }
   
   /* Optimize off-screen content */
   section:not(:target) {
     content-visibility: auto;
+  }
+  
+  /* Optimize images for faster loading */
+  img {
+    content-visibility: auto;
+    /* Prevent layout shifts */
+    aspect-ratio: attr(width) / attr(height);
   }
   
   /* Smooth transitions only for interactive elements - Optimized */
