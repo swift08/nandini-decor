@@ -1516,10 +1516,10 @@ export default function Home() {
           >
             <motion.div
               key={activeTestimonial}
-              className="backdrop-blur-lg rounded-2xl p-8 md:p-12 shadow-2xl border-2 relative overflow-hidden w-full mx-auto"
+              className="testimonial-card-clear rounded-2xl p-8 md:p-12 shadow-2xl border-2 relative overflow-hidden w-full mx-auto"
               style={{
-                background: 'rgba(15, 61, 86, 0.85)',
-                borderColor: 'rgba(250, 209, 231, 0.5)'
+                background: 'rgba(15, 61, 86, 0.95)',
+                borderColor: 'rgba(250, 209, 231, 0.5)',
               }}
               initial={{ opacity: 0, scale: 0.9, rotateY: -10 }}
               animate={{ opacity: 1, scale: 1, rotateY: 0 }}
@@ -1937,7 +1937,7 @@ export default function Home() {
                 }}
               >
                 <div className="absolute inset-0 opacity-35 pointer-events-none" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(130,200,229,0.18), transparent 55%)' }} />
-                <div className="relative grid gap-8 lg:grid-cols-[minmax(280px,360px)_1fr] items-center rounded-[38px] bg-white/92 border border-white/70 p-6 md:p-10 backdrop-blur-2xl">
+                <div className="relative grid gap-8 lg:grid-cols-[minmax(280px,360px)_1fr] items-center rounded-[38px] founder-card-clear border border-white/70 p-6 md:p-10">
                   <div className="relative h-full w-full">
                     <div className="absolute -inset-2 rounded-[34px] bg-gradient-to-br from-[#FEEBD3] via-transparent to-[#CDE8FF] blur-2xl opacity-70" />
                     <div className="relative rounded-[32px] overflow-hidden border border-white/60 shadow-[0_35px_65px_rgba(15,61,86,0.3)] min-h-[340px]">
@@ -1947,8 +1947,8 @@ export default function Home() {
                           alt={leader.name}
                           fill
                           sizes="(max-width: 768px) 100vw, 320px"
-                          className="object-cover object-center"
-                          style={{ filter: 'brightness(1.08) contrast(1.12)' }}
+                          className="object-cover object-center founder-image-clear"
+                          quality={100}
                           unoptimized
                           priority={leader.name === 'Chandan C'}
                           onError={(e) => {
@@ -2068,10 +2068,10 @@ export default function Home() {
                 {contactEntries.map((entry, index) => (
               <motion.div
                     key={entry.title}
-                    className="p-5 rounded-2xl shadow-lg backdrop-blur contact-card-hover"
+                    className="p-5 rounded-2xl shadow-lg contact-card-clear contact-card-hover"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      border: '2px solid rgba(250, 209, 231, 0.4)'
+                      background: 'rgba(255, 255, 255, 0.98)',
+                      border: '2px solid rgba(250, 209, 231, 0.4)',
                     }}
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}

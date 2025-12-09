@@ -1599,6 +1599,39 @@
     -webkit-backdrop-filter: blur(2px) !important;
   }
   
+  /* Clear sections on mobile - Remove blur for clarity */
+  .testimonial-card-clear {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(15, 61, 86, 0.98) !important;
+  }
+  
+  .founder-card-clear {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+  }
+  
+  .contact-card-clear {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  .founder-image-clear {
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges !important;
+    filter: none !important;
+  }
+  
+  /* Ensure text is sharp on mobile */
+  .testimonial-card-clear *,
+  .founder-card-clear *,
+  .contact-card-clear * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
   /* Optimize animations for mobile - non-blocking */
   * {
     /* Faster, lighter animations */
@@ -1630,9 +1663,10 @@
     content-visibility: auto;
     /* Prevent layout shifts */
     aspect-ratio: attr(width) / attr(height);
-    /* Smooth loading */
+    /* Sharp images on mobile */
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
+    -webkit-font-smoothing: antialiased;
   }
   
   /* Remove will-change when not needed */
@@ -1995,6 +2029,30 @@ p {
   .backdrop-premium {
     backdrop-filter: blur(4px) saturate(120%) !important;
     -webkit-backdrop-filter: blur(4px) saturate(120%) !important;
+  }
+}
+
+/* Desktop - Restore blur effects */
+@media (min-width: 769px) {
+  .testimonial-card-clear {
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    background: rgba(15, 61, 86, 0.85) !important;
+  }
+  
+  .founder-card-clear {
+    backdrop-filter: blur(40px) !important;
+    -webkit-backdrop-filter: blur(40px) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+  }
+  
+  .contact-card-clear {
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+  
+  .founder-image-clear {
+    filter: brightness(1.08) contrast(1.12) !important;
   }
 }
 
