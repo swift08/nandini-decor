@@ -17,16 +17,39 @@ export default function Floral3DBackground({
 }: Floral3DBackgroundProps) {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
+  // Optimized mouse tracking - throttle for mobile performance
   useEffect(() => {
+    let rafId: number | null = null;
+    let lastX = 0;
+    let lastY = 0;
+    
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth - 0.5) * 20,
-        y: (e.clientY / window.innerHeight - 0.5) * 20,
+      if (rafId !== null) return;
+      
+      rafId = requestAnimationFrame(() => {
+        const newX = (e.clientX / window.innerWidth - 0.5) * 20;
+        const newY = (e.clientY / window.innerHeight - 0.5) * 20;
+        
+        // Only update if change is significant (reduce updates)
+        if (Math.abs(newX - lastX) > 1 || Math.abs(newY - lastY) > 1) {
+          setMousePosition({ x: newX, y: newY });
+          lastX = newX;
+          lastY = newY;
+        }
+        
+        rafId = null;
       });
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    // Only add listener on desktop (not mobile)
+    if (window.innerWidth > 768) {
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    }
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const opacityMap = {
@@ -47,11 +70,11 @@ export default function Floral3DBackground({
       <motion.div
         className="absolute inset-0"
         animate={{
-          scale: [1, 1.08, 1],
-          rotate: [0, 1, 0],
+          scale: [1, 1.05, 1],
+          rotate: [0, 0.5, 0],
         }}
         transition={{
-          duration: 30,
+          duration: 40,
           repeat: Infinity,
           ease: "easeInOut"
         }}
@@ -77,16 +100,16 @@ export default function Floral3DBackground({
         <motion.div
           className="absolute inset-0"
           animate={{
-            scale: [1.1, 1.15, 1.1],
-            x: [0, 30, 0],
-            y: [0, -20, 0],
-            rotate: [0, -1, 0],
+            scale: [1.05, 1.1, 1.05],
+            x: [0, 15, 0],
+            y: [0, -10, 0],
+            rotate: [0, -0.5, 0],
           }}
           transition={{
-            duration: 35,
+            duration: 50,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: 3
+            delay: 5
           }}
           style={{
             filter: 'blur(2px)',

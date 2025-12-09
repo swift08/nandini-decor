@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { 
@@ -27,19 +27,29 @@ import {
   Clock
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { Suspense, memo } from 'react';
 import Navbar from '@/components/Navbar';
 import ScrollProgress from '@/components/ScrollProgress';
 
-// Lazy load heavy components for faster initial load - Premium performance
+// Lazy load heavy components with Suspense - Ultra-fast loading
 const ImageLightbox = dynamic(() => import('@/components/ImageLightbox'), {
   ssr: false,
   loading: () => null,
 });
 
+// Lazy load with error boundary
 const Floral3DBackground = dynamic(() => import('@/components/Floral3DBackground'), {
   ssr: false,
   loading: () => null,
 });
+
+// Memoized wrapper to prevent unnecessary re-renders
+const MemoizedFloralBackground = memo(({ images, intensity }: { images: string[], intensity: string }) => (
+  <Suspense fallback={null}>
+    <Floral3DBackground images={images} intensity={intensity} />
+  </Suspense>
+));
+MemoizedFloralBackground.displayName = 'MemoizedFloralBackground';
 
 export default function Home() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -598,25 +608,61 @@ export default function Home() {
     }
   ];
 
+  // Optimized scroll handler with throttling - prevent lag
   useEffect(() => {
+    let rafId: number | null = null;
+    let lastScrollY = 0;
+    
     const handleScroll = () => {
-      const sections = ['about', 'services', 'gallery', 'testimonials', 'contact'];
-      sections.forEach(section => {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const isInView = rect.top < window.innerHeight * 0.75;
-          setIsVisible(prev => ({ ...prev, [section]: isInView }));
+      if (rafId !== null) return; // Skip if already scheduled
+      
+      rafId = requestAnimationFrame(() => {
+        try {
+          const scrollY = window.scrollY || window.pageYOffset;
+          // Only update if scrolled significantly (reduce updates)
+          if (Math.abs(scrollY - lastScrollY) < 50) {
+            rafId = null;
+            return;
+          }
+          
+          const sections = ['about', 'services', 'gallery', 'testimonials', 'contact'];
+          sections.forEach(section => {
+            try {
+              const element = document.getElementById(section);
+              if (element) {
+                const rect = element.getBoundingClientRect();
+                const isInView = rect.top < window.innerHeight * 0.75;
+                setIsVisible(prev => {
+                  if (prev[section as keyof typeof prev] === isInView) return prev;
+                  return { ...prev, [section]: isInView };
+                });
+              }
+            } catch (e) {
+              // Ignore errors
+            }
+          });
+          
+          lastScrollY = scrollY;
+          rafId = null;
+        } catch (e) {
+          rafId = null;
         }
       });
     };
 
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Defer initial check
+    setTimeout(handleScroll, 100);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
+  // Optimized testimonial rotation - prevent unnecessary updates
   useEffect(() => {
+    if (testimonials.length === 0) return;
     const interval = setInterval(() => {
       setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 5000);
@@ -1173,8 +1219,8 @@ export default function Home() {
           position: 'relative',
         }}
       >
-        {/* 3D Floral Background */}
-        <Floral3DBackground 
+        {/* 3D Floral Background - Lazy loaded */}
+        <MemoizedFloralBackground 
           images={slideshowImages.slice(0, 3)} 
           intensity="medium"
         />
@@ -1341,8 +1387,8 @@ export default function Home() {
         id="portfolio" 
         className="py-8 md:py-16 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background */}
-        <Floral3DBackground 
+        {/* 3D Floral Background - Lazy loaded */}
+        <MemoizedFloralBackground 
           images={slideshowImages.slice(1, 4)} 
           intensity="medium"
         />
@@ -1627,8 +1673,8 @@ export default function Home() {
 
       {/* Puneeth Rajkumar Tribute Offer */}
       <section className="py-10 md:py-14 relative z-10" id="tribute">
-        {/* 3D Floral Background */}
-        <Floral3DBackground 
+        {/* 3D Floral Background - Lazy loaded */}
+        <MemoizedFloralBackground 
           images={slideshowImages.slice(4, 7)} 
           intensity="medium"
         />
@@ -1736,8 +1782,8 @@ export default function Home() {
         id="about" 
         className="py-10 md:py-16 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background */}
-        <Floral3DBackground 
+        {/* 3D Floral Background - Lazy loaded */}
+        <MemoizedFloralBackground 
           images={[slideshowImages[5], slideshowImages[0], slideshowImages[2]]} 
           intensity="medium"
         />
@@ -1808,8 +1854,8 @@ export default function Home() {
 
       {/* Since 1993 - Business Highlights */}
       <section className="py-12 md:py-16 relative z-10" id="legacy">
-        {/* 3D Floral Background */}
-        <Floral3DBackground 
+        {/* 3D Floral Background - Lazy loaded */}
+        <MemoizedFloralBackground 
           images={slideshowImages.slice(2, 5)} 
           intensity="medium"
         />
@@ -1878,8 +1924,8 @@ export default function Home() {
         id="founder"
         className="py-12 md:py-20 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background */}
-        <Floral3DBackground 
+        {/* 3D Floral Background - Lazy loaded */}
+        <MemoizedFloralBackground 
           images={slideshowImages.slice(5, 8)} 
           intensity="medium"
         />
@@ -2026,8 +2072,8 @@ export default function Home() {
         id="contact" 
         className="py-8 md:py-12 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background */}
-        <Floral3DBackground 
+        {/* 3D Floral Background - Lazy loaded */}
+        <MemoizedFloralBackground 
           images={slideshowImages.slice(1, 4)} 
           intensity="medium"
         />

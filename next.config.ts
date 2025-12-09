@@ -36,7 +36,11 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
     // Optimize CSS loading
     optimizeCss: true,
+    // Reduce bundle size
+    optimizeServerReact: true,
   },
+  // Output configuration for better performance
+  output: 'standalone',
   // Compiler optimizations
   compiler: {
     // Remove console.log in production
