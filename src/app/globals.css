@@ -153,12 +153,7 @@
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
-    /* Premium smooth scroll - optimized */
     scroll-snap-type: none;
-    /* Force hardware acceleration for smooth scrolling */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: scroll-position;
   }
   
   /* Premium Performance Optimizations */
@@ -166,51 +161,32 @@
     -webkit-tap-highlight-color: transparent;
   }
   
-  /* GPU-accelerated smooth scrolling - Enhanced */
-  html {
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: scroll-position;
-  }
-  
-  /* Performance optimizations - Use CSS transforms only */
+  /* Performance optimizations - Only apply to sections that need it */
   section {
-    transform: translate3d(0, 0, 0);
-    -webkit-transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    perspective: 1000px;
-    -webkit-perspective: 1000px;
     contain: layout style paint;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
   }
   
-  /* Smooth transitions for all interactive elements - Premium easing */
+  /* Optimize off-screen content */
+  section:not(:target) {
+    content-visibility: auto;
+  }
+  
+  /* Smooth transitions only for interactive elements - Optimized */
   a, button {
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out, box-shadow 0.2s ease-out;
   }
   
-  /* GPU acceleration for animations - Optimized */
-  [class*="motion-"], [class*="animate-"] {
+  /* GPU acceleration only for active animations */
+  [class*="motion-"]:hover,
+  [class*="animate-"]:hover {
     will-change: transform, opacity;
-    transform: translate3d(0, 0, 0);
-    -webkit-transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
   }
   
-  /* Optimize image rendering */
+  /* Optimize image rendering - no forced transforms */
   img {
     image-rendering: -webkit-optimize-contrast;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: transform;
-  }
-  
-  /* Premium scroll performance - Optimized for smoothness */
-  * {
-    scroll-behavior: smooth;
   }
   
   /* Enhanced smooth scrolling with momentum */
@@ -227,10 +203,9 @@
     overscroll-behavior: contain;
   }
   
-  /* Optimize Next.js Image components */
+  /* Optimize Next.js Image components - no forced transforms */
   [data-next-image] {
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    content-visibility: auto;
   }
   
   /* Reduce motion for users who prefer it */
@@ -867,6 +842,7 @@
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
 }
@@ -1253,10 +1229,13 @@
   transform: translateX(5px);
 }
 
-/* Contact Card Hover Glow */
+/* Contact Card Hover Glow - Optimized */
 .contact-card-hover {
   position: relative;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+}
+
+.contact-card-hover:hover {
   will-change: transform, box-shadow;
 }
 
@@ -1402,10 +1381,13 @@
   border-color: rgba(130, 200, 229, 0.8);
 }
 
-/* Section Card Hover Animation */
+/* Section Card Hover Animation - Optimized */
 .section-card-hover {
   position: relative;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+}
+
+.section-card-hover:hover {
   will-change: transform, box-shadow;
 }
 
@@ -1540,21 +1522,56 @@
 }
 
 /* Premium Smooth Scroll Behavior - Optimized */
-html {
-  scroll-behavior: smooth;
-  scroll-padding-top: 120px;
-  scroll-snap-type: none;
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+    scroll-snap-type: none;
+    /* Force smooth scrolling on mobile */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  @media (min-width: 768px) {
+    html {
+      scroll-padding-top: 120px;
+    }
+  }
+
+/* Mobile scroll optimizations */
+@media (max-width: 768px) {
+  html {
+    /* Reduce scroll jank on mobile */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  body {
+    /* Prevent scroll lag */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+  
+  /* Reduce expensive effects on mobile */
+  [class*="blur"]:not(nav *) {
+    filter: blur(2px) !important;
+  }
+  
+  /* Navbar specific - lighter blur */
+  nav [class*="backdrop-blur"] {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  
+  /* Other backdrop blur elements */
+  [class*="backdrop-blur"]:not(nav *) {
+    backdrop-filter: blur(2px) !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+  }
 }
 
 /* Enhanced smooth scrolling with better performance */
 @media (prefers-reduced-motion: no-preference) {
   html, body {
     scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Smooth scroll momentum on iOS */
-  * {
     -webkit-overflow-scrolling: touch;
   }
 }
@@ -1565,23 +1582,15 @@ html {
   text-rendering: optimizeLegibility;
 }
 
-/* Premium Transitions - Global - Optimized for performance */
-* {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 0.3s;
-}
+/* Premium Transitions - Selective - Optimized for performance */
+/* Removed global transitions to prevent jank - only apply where needed */
 
-/* Smooth scroll performance optimization */
+/* Smooth scroll performance optimization - Mobile specific */
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
   }
   
-  /* Use CSS transforms for smooth scrolling */
-  * {
-    scroll-behavior: smooth;
-  }
 }
 
 /* Floral-themed hover animations */
@@ -1630,17 +1639,22 @@ html {
   z-index: -1;
 }
 
+@media (max-width: 768px) {
+  .floral-hover-glow::before {
+    filter: blur(4px);
+    animation: none; /* Disable animation on mobile for better performance */
+  }
+}
+
 .floral-hover-glow:hover::before {
   opacity: 1;
 }
 
-.floral-hover-swirl {
-  /* Simplified - no animation that can cause issues */
-}
+/* .floral-hover-swirl - Removed to prevent performance issues */
 
-/* Premium Button Hover Effects */
+/* Premium Button Hover Effects - Optimized */
 button, a[role="button"], .btn {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
   position: relative;
   overflow: hidden;
 }
@@ -1648,6 +1662,7 @@ button, a[role="button"], .btn {
 button:hover, a[role="button"]:hover, .btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.1);
+  will-change: transform;
 }
 
 button:active, a[role="button"]:active, .btn:active {
@@ -1655,25 +1670,27 @@ button:active, a[role="button"]:active, .btn:active {
   transition-duration: 0.1s;
 }
 
-/* Premium Card Hover Effects */
+/* Premium Card Hover Effects - Optimized */
 .card, [class*="card"] {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform, box-shadow;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
 }
 
 .card:hover, [class*="card"]:hover {
   transform: translateY(-8px) scale(1.02);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 10px 20px rgba(0, 0, 0, 0.08);
+  will-change: transform, box-shadow;
 }
 
-/* Premium Image Hover Effects */
+/* Premium Image Hover Effects - Optimized */
 img {
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease;
+  content-visibility: auto;
 }
 
 img:hover {
   transform: scale(1.05);
   filter: brightness(1.05) contrast(1.05);
+  will-change: transform;
 }
 
 /* Premium Typography Enhancements */
@@ -1688,11 +1705,9 @@ p {
   letter-spacing: 0.01em;
 }
 
-/* Premium Section Transitions */
-section {
-  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: opacity;
-}
+/* Premium Section Transitions - Optimized */
+/* Removed will-change from sections to prevent layer explosion */
+/* Only add will-change when section is actually animating */
 
 /* Premium Scroll Animations */
 @keyframes fadeInUp {
@@ -1739,13 +1754,20 @@ section {
   }
 }
 
-/* Premium Glass Morphism */
+/* Premium Glass Morphism - Optimized for mobile */
 .glass-premium {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .glass-premium {
+    backdrop-filter: blur(4px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(4px) saturate(120%) !important;
+  }
 }
 
 /* Premium Shadows */
@@ -1884,15 +1906,23 @@ section {
   background: linear-gradient(135deg, rgba(251, 191, 36, 0.5), rgba(130, 200, 229, 0.5));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   z-index: -1;
 }
 
-/* Premium Backdrop Blur */
+/* Premium Backdrop Blur - Optimized for mobile */
 .backdrop-premium {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   background: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 768px) {
+  .backdrop-premium {
+    backdrop-filter: blur(4px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(4px) saturate(120%) !important;
+  }
 }
 
 /* Hide Next.js error overlay portal */

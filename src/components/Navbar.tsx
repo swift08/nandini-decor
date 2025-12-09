@@ -24,58 +24,67 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
+    let rafId: number | null = null;
+    let lastScrollY = 0;
+    
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-
-      // Detect active section - order matches page structure
-      const sections = ['home', 'services', 'portfolio', 'testimonials', 'tribute', 'about', 'legacy', 'founder', 'contact'];
-      const scrollPosition = window.scrollY + 150; // Adjusted offset for better detection
-
-      let currentSection = 'home';
+      const scrollY = window.scrollY;
       
-      // Check home section first (first section element)
-      const firstSection = document.querySelector('section');
-      if (firstSection && window.scrollY < 100) {
-        setActiveSection('home');
-        return;
+      // Cancel any pending animation frame
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
       }
 
-      // Check other sections
-      for (const section of sections) {
-        if (section === 'home') continue;
+      rafId = requestAnimationFrame(() => {
+        setIsScrolled(scrollY > 50);
+
+        // Detect active section - order matches page structure
+        const sections = ['home', 'services', 'portfolio', 'testimonials', 'tribute', 'about', 'legacy', 'founder', 'contact'];
+        const scrollPosition = scrollY + 150; // Adjusted offset for better detection
+
+        let currentSection = 'home';
         
-        const element = document.getElementById(section);
-        if (element) {
-          const { offsetTop, offsetHeight } = element as HTMLElement;
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            currentSection = section;
-            break;
-          }
-          // If we've passed this section, it might be the active one
-          if (scrollPosition >= offsetTop) {
-            currentSection = section;
+        // Check home section first (first section element)
+        if (scrollY < 100) {
+          setActiveSection('home');
+          lastScrollY = scrollY;
+          rafId = null;
+          return;
         }
-      }
-      }
-      
-      setActiveSection(currentSection);
+
+        // Check other sections - cache elements to avoid repeated DOM queries
+        for (const section of sections) {
+          if (section === 'home') continue;
+          
+          const element = document.getElementById(section);
+          if (element) {
+            const { offsetTop, offsetHeight } = element;
+            if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+              currentSection = section;
+              break;
+            }
+            // If we've passed this section, it might be the active one
+            if (scrollPosition >= offsetTop) {
+              currentSection = section;
+            }
+          }
+        }
+        
+        setActiveSection(currentSection);
+        lastScrollY = scrollY;
+        rafId = null;
+      });
     };
 
-    // Throttle scroll events for better performance
-    let ticking = false;
-    const throttledScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-    handleScroll();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', throttledScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial check
-    return () => window.removeEventListener('scroll', throttledScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -158,7 +167,7 @@ export default function Navbar() {
         : document.querySelector(href);
       
       if (element) {
-        const yOffset = -120; // Offset for navbar
+        const yOffset = window.innerWidth < 768 ? -80 : -120; // Smaller offset on mobile
         const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
         window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
@@ -169,10 +178,10 @@ export default function Navbar() {
     <>
       {/* Unified Navbar for Desktop and Mobile - Always Fixed */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
           isScrolled 
-            ? 'py-0 md:py-2 lg:py-2.5 animate-slide-down' 
-            : 'py-0 md:py-3 lg:py-4'
+            ? 'py-1 md:py-2 lg:py-2.5' 
+            : 'py-1 md:py-3 lg:py-4'
         }`}
         style={{
           background: 'transparent',
@@ -183,16 +192,18 @@ export default function Navbar() {
           width: '100%',
         }}
       >
-        <div className="container mx-auto px-0 md:px-6 lg:px-8">
-            <div className={`relative backdrop-blur-2xl border-2 rounded-lg md:rounded-3xl shadow-2xl transition-all duration-500 ${
-            isScrolled ? 'shadow-[0_0_30px_rgba(250,209,231,0.3)]' : 'shadow-[0_0_20px_rgba(250,209,231,0.2)]'
+        <div className="container mx-auto px-2 md:px-6 lg:px-8">
+            <div className={`relative backdrop-blur-md md:backdrop-blur-2xl border border-white/20 md:border-2 rounded-lg md:rounded-3xl shadow-lg md:shadow-2xl transition-all duration-300 ${
+            isScrolled ? 'shadow-[0_0_20px_rgba(250,209,231,0.2)] md:shadow-[0_0_30px_rgba(250,209,231,0.3)]' : 'shadow-[0_0_10px_rgba(250,209,231,0.15)] md:shadow-[0_0_20px_rgba(250,209,231,0.2)]'
           }`}
           style={{
-            background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.85) 0%, rgba(164, 62, 119, 0.75) 50%, rgba(15, 61, 86, 0.85) 100%)',
-            borderColor: isScrolled ? 'rgba(250, 209, 231, 0.5)' : 'rgba(250, 209, 231, 0.4)'
+            background: 'linear-gradient(135deg, rgba(15, 61, 86, 0.92) 0%, rgba(164, 62, 119, 0.85) 50%, rgba(15, 61, 86, 0.92) 100%)',
+            borderColor: isScrolled ? 'rgba(250, 209, 231, 0.4)' : 'rgba(250, 209, 231, 0.3)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
           }}>
-            {/* Floral Animated Border Glow */}
-            <div className="absolute -inset-[1px] rounded-lg md:rounded-3xl opacity-30 blur-sm animate-pulse" 
+            {/* Floral Animated Border Glow - Hidden on mobile for performance */}
+            <div className="hidden md:block absolute -inset-[1px] rounded-lg md:rounded-3xl opacity-30 blur-sm animate-pulse" 
               style={{
                 background: 'linear-gradient(135deg, rgba(250, 209, 231, 0.8) 0%, rgba(188, 225, 241, 0.8) 50%, rgba(250, 209, 231, 0.8) 100%)'
               }}
@@ -243,36 +254,41 @@ export default function Navbar() {
               </div>
             </div>
             
-            <div className="relative flex flex-row items-center justify-between px-0 md:px-6 lg:px-8 py-0 md:py-2.5 lg:py-3 gap-0 md:gap-4 lg:gap-5">
-              {/* Logo with Enhanced Breathing and Royal Crown - Perfect Fit in Mobile Navbar */}
-              <Link href="#" onClick={() => handleMenuClick('#', 'home')} className="flex items-center justify-center group flex-shrink-0 flex-1 md:flex-none md:w-auto">
+            <div className="relative flex flex-row items-center justify-between px-2 md:px-6 lg:px-8 py-1.5 md:py-2.5 lg:py-3 gap-2 md:gap-4 lg:gap-5">
+              {/* Logo with Enhanced Breathing and Royal Crown - Compact on Mobile */}
+              <Link href="#" onClick={() => handleMenuClick('#', 'home')} className="flex items-center justify-center group flex-shrink-0">
                 <div className="relative">
                   <Image
                     src="/assets/logo.png"
                     alt="Nandini Decoration Logo"
                     width={160}
                     height={160}
-                    className="w-36 h-36 sm:w-40 sm:h-40 md:w-28 md:h-28 lg:w-32 lg:h-32 object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-500"
-                    style={{ filter: 'drop-shadow(0 0 18px rgba(251, 191, 36, 0.9))' }}
+                    className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
+                    style={{ filter: 'drop-shadow(0 0 12px rgba(251, 191, 36, 0.7))' }}
                     unoptimized
+                    priority
                   />
-                  <div className="absolute inset-0 bg-gold/30 blur-2xl rounded-full animate-pulse scale-125" />
+                  <div className="hidden md:block absolute inset-0 bg-gold/30 blur-2xl rounded-full animate-pulse scale-125" />
                 </div>
               </Link>
 
-              {/* Mobile Hamburger */}
+              {/* Mobile Hamburger - Compact */}
               <button
                 type="button"
-                className="md:hidden absolute top-0 right-0 inline-flex items-center justify-center rounded-full border border-white/30 text-white px-2 py-1.5 gap-1 bg-white/10 backdrop-blur hover:bg-white/20 transition z-50 m-1"
+                className="md:hidden inline-flex items-center justify-center rounded-lg border border-white/30 text-white px-2.5 py-1.5 gap-1.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-200 z-50"
                 onClick={() => setIsMenuOpen((prev) => !prev)}
                 aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                style={{
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)',
+                }}
               >
-                {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
-                <span className="text-sm font-semibold">Menu</span>
+                {isMenuOpen ? <X size={16} /> : <Menu size={16} />}
+                <span className="text-xs font-semibold">Menu</span>
               </button>
 
               {/* Menu Items - No Overflow, All Visible */}
-              <div className="hidden md:flex flex-nowrap items-center justify-center gap-2 md:gap-3 lg:gap-4 relative flex-1 md:flex-none">
+              <div className="hidden md:flex flex-nowrap items-center justify-center gap-1.5 md:gap-2 lg:gap-3 relative flex-1 md:flex-none">
                 {menuItems.map((item, index) => (
                   <a
                     key={item.id}
@@ -282,7 +298,7 @@ export default function Navbar() {
                       e.preventDefault();
                       handleMenuClick(item.href, item.id);
                     }}
-                    className={`relative text-white font-semibold text-xs md:text-sm lg:text-base transition-all duration-300 group menu-item flex items-center gap-1 md:gap-0 px-1.5 py-1 md:px-2 md:py-1.5 lg:px-3 lg:py-2 rounded-lg md:rounded-none whitespace-nowrap ${
+                    className={`relative text-white font-medium text-[10px] md:text-xs lg:text-sm transition-all duration-300 group menu-item flex items-center gap-0.5 md:gap-0 px-1 py-0.5 md:px-1.5 md:py-1 lg:px-2 lg:py-1.5 rounded-lg md:rounded-none whitespace-nowrap ${
                       activeSection === item.id 
                         ? 'text-gold scale-105 md:scale-105 tracking-wide bg-gold/20 md:bg-transparent' 
                         : 'hover:text-gold-light hover:scale-105 hover:bg-white/10 md:hover:bg-transparent'
@@ -321,7 +337,7 @@ export default function Navbar() {
                   e.preventDefault();
                   handleMenuClick('#contact', 'contact');
                 }}
-                className="relative px-3 md:px-5 lg:px-6 py-1.5 md:py-2 lg:py-2.5 bg-gradient-to-r from-blue-600 via-blue-500 to-gold rounded-full text-white font-bold text-xs md:text-sm lg:text-base shadow-2xl overflow-hidden group border-2 border-gold/50 hover:border-gold transition-all duration-500 hidden md:flex items-center gap-1.5 md:gap-2 flex-shrink-0 whitespace-nowrap"
+                className="relative px-2 md:px-4 lg:px-5 py-1 md:py-1.5 lg:py-2 bg-gradient-to-r from-blue-600 via-blue-500 to-gold rounded-full text-white font-semibold text-[10px] md:text-xs lg:text-sm shadow-2xl overflow-hidden group border-2 border-gold/50 hover:border-gold transition-all duration-500 hidden md:flex items-center gap-1 md:gap-1.5 flex-shrink-0 whitespace-nowrap"
                 style={{
                   animation: 'cta-breathing 4s ease-in-out infinite',
                   boxShadow: '0 10px 40px rgba(59, 130, 246, 0.5), 0 0 30px rgba(251, 191, 36, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.3)'
@@ -341,7 +357,12 @@ export default function Navbar() {
               {/* Mobile Menu Drawer */}
               {isMenuOpen && (
                 <div className="md:hidden mt-2 w-full">
-                  <div className="rounded-2xl bg-white/10 backdrop-blur-lg border border-white/30 shadow-xl flex flex-col divide-y divide-white/10">
+                  <div className="rounded-xl bg-white/15 backdrop-blur-md border border-white/30 shadow-lg flex flex-col divide-y divide-white/10"
+                    style={{
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                    }}
+                  >
                     {menuItems.map((item) => (
                       <button
                         key={item.id}
@@ -370,8 +391,8 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Spacer for fixed navbar */}
-      <div className={`transition-all duration-500 ${isScrolled ? 'h-20 md:h-20 lg:h-24' : 'h-24 md:h-24 lg:h-28'}`} />
+      {/* Spacer for fixed navbar - Compact on mobile */}
+      <div className={`transition-all duration-300 ${isScrolled ? 'h-16 md:h-20 lg:h-24' : 'h-20 md:h-24 lg:h-28'}`} />
     </>
   );
 }

@@ -64,30 +64,12 @@ export default function Home() {
     '/assets/slideshow/WhatsApp Image 2025-11-27 at 5.29.01 PM.jpeg',
   ];
 
-  // Enhanced smooth scroll optimization - Simplified
+  // Enhanced smooth scroll optimization - Removed unnecessary scroll listener
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Force smooth scroll behavior
       document.documentElement.style.scrollBehavior = 'smooth';
       document.body.style.scrollBehavior = 'smooth';
-      
-      // Optimize scroll performance with passive listeners
-      let ticking = false;
-      const handleScroll = () => {
-        if (!ticking) {
-          window.requestAnimationFrame(() => {
-            // Minimal scroll-based work here
-            ticking = false;
-          });
-          ticking = true;
-        }
-      };
-      
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      
-      return () => {
-        window.removeEventListener('scroll', handleScroll);
-      };
     }
   }, []);
 
@@ -778,7 +760,7 @@ export default function Home() {
     }
   };
 
-  // Intersection Observer for scroll animations
+  // Intersection Observer for scroll animations - Optimized
   useEffect(() => {
     // Wait for DOM to be ready
     let observer: IntersectionObserver | null = null;
@@ -787,19 +769,28 @@ export default function Home() {
       try {
         const observerOptions = {
           root: null,
-          rootMargin: '0px',
-          threshold: 0.1,
+          rootMargin: '50px', // Start animation slightly before element is visible
+          threshold: [0, 0.1, 0.5], // Multiple thresholds for better performance
         };
 
         const observerCallback = (entries: IntersectionObserverEntry[]) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const sectionId = entry.target.id;
-              setIsVisible((prev) => ({
-                ...prev,
-                [sectionId]: true,
-              }));
-            }
+          // Use requestAnimationFrame to batch updates
+          requestAnimationFrame(() => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
+                const sectionId = entry.target.id;
+                setIsVisible((prev) => {
+                  // Only update if not already visible
+                  if (prev[sectionId as keyof typeof prev]) return prev;
+                  return {
+                    ...prev,
+                    [sectionId]: true,
+                  };
+                });
+                // Unobserve after first intersection for better performance
+                observer?.unobserve(entry.target);
+              }
+            });
           });
         };
 
