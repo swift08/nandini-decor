@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { 
@@ -27,29 +27,16 @@ import {
   Clock
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { Suspense, memo } from 'react';
+import { Suspense, lazy } from 'react';
 import Navbar from '@/components/Navbar';
 import ScrollProgress from '@/components/ScrollProgress';
 
-// Lazy load heavy components with Suspense - Ultra-fast loading
-const ImageLightbox = dynamic(() => import('@/components/ImageLightbox'), {
-  ssr: false,
-  loading: () => null,
-});
+// Ultra-lazy load heavy components - No SSR, no loading state to prevent blocking
+const ImageLightbox = lazy(() => import('@/components/ImageLightbox'));
+const Floral3DBackground = lazy(() => import('@/components/Floral3DBackground'));
 
-// Lazy load with error boundary
-const Floral3DBackground = dynamic(() => import('@/components/Floral3DBackground'), {
-  ssr: false,
-  loading: () => null,
-});
-
-// Memoized wrapper to prevent unnecessary re-renders
-const MemoizedFloralBackground = memo(({ images, intensity }: { images: string[], intensity: string }) => (
-  <Suspense fallback={null}>
-    <Floral3DBackground images={images} intensity={intensity} />
-  </Suspense>
-));
-MemoizedFloralBackground.displayName = 'MemoizedFloralBackground';
+// Empty fallback - don't block rendering
+const EmptyFallback = () => null;
 
 export default function Home() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -67,17 +54,10 @@ export default function Home() {
     contact: false
   });
 
-  // Set mounted state immediately - no delay
+  // Set mounted state immediately - no delay, no blocking
   useEffect(() => {
-    // Use requestIdleCallback for non-blocking initialization
-    if (typeof window !== 'undefined') {
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => setIsMounted(true), { timeout: 0 });
-      } else {
-        // Fallback for browsers without requestIdleCallback
-        setTimeout(() => setIsMounted(true), 0);
-      }
-    }
+    // Immediately set mounted - no waiting
+    setIsMounted(true);
   }, []);
 
   // Slideshow Images from slideshow folder - All 8 images
@@ -608,61 +588,25 @@ export default function Home() {
     }
   ];
 
-  // Optimized scroll handler with throttling - prevent lag
   useEffect(() => {
-    let rafId: number | null = null;
-    let lastScrollY = 0;
-    
     const handleScroll = () => {
-      if (rafId !== null) return; // Skip if already scheduled
-      
-      rafId = requestAnimationFrame(() => {
-        try {
-          const scrollY = window.scrollY || window.pageYOffset;
-          // Only update if scrolled significantly (reduce updates)
-          if (Math.abs(scrollY - lastScrollY) < 50) {
-            rafId = null;
-            return;
-          }
-          
-          const sections = ['about', 'services', 'gallery', 'testimonials', 'contact'];
-          sections.forEach(section => {
-            try {
-              const element = document.getElementById(section);
-              if (element) {
-                const rect = element.getBoundingClientRect();
-                const isInView = rect.top < window.innerHeight * 0.75;
-                setIsVisible(prev => {
-                  if (prev[section as keyof typeof prev] === isInView) return prev;
-                  return { ...prev, [section]: isInView };
-                });
-              }
-            } catch (e) {
-              // Ignore errors
-            }
-          });
-          
-          lastScrollY = scrollY;
-          rafId = null;
-        } catch (e) {
-          rafId = null;
+      const sections = ['about', 'services', 'gallery', 'testimonials', 'contact'];
+      sections.forEach(section => {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const isInView = rect.top < window.innerHeight * 0.75;
+          setIsVisible(prev => ({ ...prev, [section]: isInView }));
         }
       });
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    // Defer initial check
-    setTimeout(handleScroll, 100);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId !== null) cancelAnimationFrame(rafId);
-    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Optimized testimonial rotation - prevent unnecessary updates
   useEffect(() => {
-    if (testimonials.length === 0) return;
     const interval = setInterval(() => {
       setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 5000);
@@ -976,22 +920,14 @@ export default function Home() {
     };
   }, []);
 
-  // Memoize expensive computations
-  const memoizedSlideshowImages = useMemo(() => slideshowImages, []);
-  const memoizedPortfolioImages = useMemo(() => allPortfolioImages, []);
-  
   // Never block rendering - always show content immediately
   return (
     <div className="min-h-screen bg-white relative overflow-x-hidden">
       {/* Premium Scroll Progress Indicator */}
-      <Suspense fallback={null}>
-        <ScrollProgress />
-      </Suspense>
+      <ScrollProgress />
       
       {/* Navbar */}
-      <Suspense fallback={null}>
-        <Navbar />
-      </Suspense>
+      <Navbar />
 
       {/* Hero Section - Simple Slideshow Background */}
       <section 
@@ -1001,8 +937,8 @@ export default function Home() {
       >
         {/* Optimized Slideshow Background - CSS-based for smooth performance */}
         <div className="absolute inset-0 z-[1] overflow-hidden">
-          {memoizedSlideshowImages.map((image, index) => {
-            const isActive = index === (currentHeroSlide % memoizedSlideshowImages.length);
+          {slideshowImages.map((image, index) => {
+            const isActive = index === (currentHeroSlide % slideshowImages.length);
             return (
               <div
                 key={`slideshow-${index}-${image}`}
@@ -1017,7 +953,7 @@ export default function Home() {
               >
                 <Image
                   src={image}
-                  alt={`Slideshow Image ${index + 1} of ${memoizedSlideshowImages.length}`}
+                  alt={`Slideshow Image ${index + 1} of ${slideshowImages.length}`}
                   fill
                   priority={index === 0}
                   loading={index === 0 ? 'eager' : 'lazy'}
@@ -1184,8 +1120,8 @@ export default function Home() {
 
         {/* Elegant Carousel Indicators - Bottom Center - All Images */}
         <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 flex-wrap justify-center max-w-full px-4">
-          {memoizedSlideshowImages.map((_, index) => {
-            const activeIndex = currentHeroSlide % memoizedSlideshowImages.length;
+          {slideshowImages.map((_, index) => {
+            const activeIndex = currentHeroSlide % slideshowImages.length;
             return (
                   <button
                     key={index}
@@ -1212,7 +1148,7 @@ export default function Home() {
           }}
         >
           <p className="text-xs md:text-sm font-semibold text-white">
-            {(currentHeroSlide % memoizedSlideshowImages.length) + 1} / {memoizedSlideshowImages.length}
+            {(currentHeroSlide % slideshowImages.length) + 1} / {slideshowImages.length}
           </p>
         </div>
       </section>
@@ -1228,10 +1164,12 @@ export default function Home() {
         }}
       >
         {/* 3D Floral Background - Lazy loaded */}
-        <MemoizedFloralBackground 
-          images={memoizedSlideshowImages.slice(0, 3)} 
-          intensity="medium"
-        />
+        <Suspense fallback={null}>
+          <Floral3DBackground 
+            images={slideshowImages.slice(0, 3)} 
+            intensity="medium"
+          />
+        </Suspense>
         {/* Dark Blue to White Gradient Overlay */}
         <div 
           className="absolute inset-0 pointer-events-none"
@@ -1395,9 +1333,9 @@ export default function Home() {
         id="portfolio" 
         className="py-8 md:py-16 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background - Lazy loaded */}
-        <MemoizedFloralBackground 
-          images={memoizedSlideshowImages.slice(1, 4)} 
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(1, 4)} 
           intensity="medium"
         />
         {/* Dark Blue to White Gradient Overlay */}
@@ -1457,26 +1395,26 @@ export default function Home() {
                   key={index}
                   className="relative aspect-square overflow-hidden rounded-xl cursor-pointer group shadow-premium section-card-hover"
                   onClick={() => {
-                    const globalIndex = memoizedPortfolioImages.indexOf(image);
+                    const globalIndex = allPortfolioImages.indexOf(image);
                     openLightbox(globalIndex >= 0 ? globalIndex : index);
                   }}
-                  initial={{ opacity: 0, scale: 0.98, y: 20 }}
+                  initial={{ opacity: 0, scale: 0.95, y: 30 }}
                   whileInView={{ opacity: 1, scale: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ 
-                    duration: 0.3, 
-                    delay: index * 0.03,
-                    ease: "easeOut"
+                    duration: 0.6, 
+                    delay: index * 0.06,
+                    ease: [0.25, 0.1, 0.25, 1]
                   }}
-                  whileHover={window.innerWidth > 768 ? { 
-                    scale: 1.03,
-                    y: -3,
+                  whileHover={{ 
+                    scale: 1.05,
+                    y: -5,
                     zIndex: 10,
                     transition: { 
-                      duration: 0.2,
-                      ease: "easeOut"
+                      duration: 0.4,
+                      ease: [0.25, 0.1, 0.25, 1]
                     }
-                  } : {}}
+                  }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <Image
@@ -1681,9 +1619,9 @@ export default function Home() {
 
       {/* Puneeth Rajkumar Tribute Offer */}
       <section className="py-10 md:py-14 relative z-10" id="tribute">
-        {/* 3D Floral Background - Lazy loaded */}
-        <MemoizedFloralBackground 
-          images={memoizedSlideshowImages.slice(4, 7)} 
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(4, 7)} 
           intensity="medium"
         />
         {/* Dark Blue to White Gradient Overlay */}
@@ -1790,9 +1728,9 @@ export default function Home() {
         id="about" 
         className="py-10 md:py-16 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background - Lazy loaded */}
-        <MemoizedFloralBackground 
-          images={[memoizedSlideshowImages[5], memoizedSlideshowImages[0], memoizedSlideshowImages[2]]} 
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={[slideshowImages[5], slideshowImages[0], slideshowImages[2]]} 
           intensity="medium"
         />
         {/* Decorative Floral Background Elements */}
@@ -1862,9 +1800,9 @@ export default function Home() {
 
       {/* Since 1993 - Business Highlights */}
       <section className="py-12 md:py-16 relative z-10" id="legacy">
-        {/* 3D Floral Background - Lazy loaded */}
-        <MemoizedFloralBackground 
-          images={memoizedSlideshowImages.slice(2, 5)} 
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(2, 5)} 
           intensity="medium"
         />
         <div className="container mx-auto px-4 relative z-20">
@@ -1932,9 +1870,9 @@ export default function Home() {
         id="founder"
         className="py-12 md:py-20 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background - Lazy loaded */}
-        <MemoizedFloralBackground 
-          images={memoizedSlideshowImages.slice(5, 8)} 
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(5, 8)} 
           intensity="medium"
         />
         {/* Dark Blue to White Gradient Overlay */}
@@ -2080,9 +2018,9 @@ export default function Home() {
         id="contact" 
         className="py-8 md:py-12 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background - Lazy loaded */}
-        <MemoizedFloralBackground 
-          images={memoizedSlideshowImages.slice(1, 4)} 
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(1, 4)} 
           intensity="medium"
         />
         {/* Decorative Floral Elements */}
@@ -2622,15 +2560,15 @@ export default function Home() {
         )}
       </footer>
 
-      {/* Lightbox */}
+      {/* Lightbox - Lazy loaded */}
       {lightboxOpen && (
         <Suspense fallback={null}>
           <ImageLightbox
-            images={memoizedPortfolioImages}
+            images={allPortfolioImages}
             currentIndex={currentImageIndex}
             onClose={() => setLightboxOpen(false)}
-            onNext={() => setCurrentImageIndex((prev) => (prev + 1) % memoizedPortfolioImages.length)}
-            onPrev={() => setCurrentImageIndex((prev) => (prev - 1 + memoizedPortfolioImages.length) % memoizedPortfolioImages.length)}
+            onNext={() => setCurrentImageIndex((prev) => (prev + 1) % allPortfolioImages.length)}
+            onPrev={() => setCurrentImageIndex((prev) => (prev - 1 + allPortfolioImages.length) % allPortfolioImages.length)}
           />
         </Suspense>
       )}
