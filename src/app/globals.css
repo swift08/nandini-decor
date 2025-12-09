@@ -190,7 +190,7 @@
   }
   
   /* Remove will-change when not actively animating */
-  *:not(:hover):not(:focus):not(.animate-*) {
+  *:not(:hover):not(:focus) {
     will-change: auto !important;
   }
   
