@@ -1536,21 +1536,28 @@
     }
   }
 
-/* Mobile scroll optimizations */
+/* Mobile scroll optimizations - Enhanced for fast scrolling */
 @media (max-width: 768px) {
   html {
     /* Reduce scroll jank on mobile */
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+    /* Prevent scroll-related crashes */
+    overflow-x: hidden;
   }
   
   body {
-    /* Prevent scroll lag */
+    /* Prevent scroll lag and crashes */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
+    /* Prevent momentum scrolling issues */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    /* Reduce repaints during scroll */
+    will-change: scroll-position;
   }
   
-  /* Reduce expensive effects on mobile */
+  /* Reduce expensive effects on mobile during scroll */
   [class*="blur"]:not(nav *) {
     filter: blur(2px) !important;
   }
@@ -1565,6 +1572,22 @@
   [class*="backdrop-blur"]:not(nav *) {
     backdrop-filter: blur(2px) !important;
     -webkit-backdrop-filter: blur(2px) !important;
+  }
+  
+  /* Disable animations during fast scroll to prevent crashes */
+  * {
+    /* Reduce animation complexity on mobile */
+    animation-duration: 0.3s !important;
+    transition-duration: 0.2s !important;
+  }
+  
+  /* Optimize sections for mobile scrolling */
+  section {
+    /* Prevent layout shifts */
+    contain: layout style paint;
+    /* Reduce repaints */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
 }
 

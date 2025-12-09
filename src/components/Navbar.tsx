@@ -26,63 +26,114 @@ export default function Navbar() {
   useEffect(() => {
     let rafId: number | null = null;
     let lastScrollY = 0;
+    let lastUpdateTime = 0;
+    let scrollVelocity = 0;
+    const throttleDelay = 100; // Minimum time between updates (ms)
     
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      
-      // Cancel any pending animation frame
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-      }
-
-      rafId = requestAnimationFrame(() => {
-        setIsScrolled(scrollY > 50);
-
-        // Detect active section - order matches page structure
-        const sections = ['home', 'services', 'portfolio', 'testimonials', 'tribute', 'about', 'legacy', 'founder', 'contact'];
-        const scrollPosition = scrollY + 150; // Adjusted offset for better detection
-
-        let currentSection = 'home';
+      try {
+        const scrollY = window.scrollY || window.pageYOffset || 0;
+        const now = Date.now();
+        const timeDelta = now - lastUpdateTime;
         
-        // Check home section first (first section element)
-        if (scrollY < 100) {
-          setActiveSection('home');
+        // Calculate scroll velocity
+        scrollVelocity = Math.abs(scrollY - lastScrollY) / (timeDelta || 1);
+        
+        // Skip updates if scrolling too fast (prevent crashes)
+        if (scrollVelocity > 50 && timeDelta < throttleDelay) {
           lastScrollY = scrollY;
-          rafId = null;
           return;
         }
-
-        // Check other sections - cache elements to avoid repeated DOM queries
-        for (const section of sections) {
-          if (section === 'home') continue;
-          
-          const element = document.getElementById(section);
-          if (element) {
-            const { offsetTop, offsetHeight } = element;
-            if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-              currentSection = section;
-              break;
-            }
-            // If we've passed this section, it might be the active one
-            if (scrollPosition >= offsetTop) {
-              currentSection = section;
-            }
-          }
-        }
         
-        setActiveSection(currentSection);
-        lastScrollY = scrollY;
-        rafId = null;
-      });
+        // Cancel any pending animation frame
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+        }
+
+        rafId = requestAnimationFrame(() => {
+          try {
+            setIsScrolled(scrollY > 50);
+
+            // Only update section if not scrolling too fast
+            if (scrollVelocity < 30) {
+              // Detect active section - order matches page structure
+              const sections = ['home', 'services', 'portfolio', 'testimonials', 'tribute', 'about', 'legacy', 'founder', 'contact'];
+              const scrollPosition = scrollY + 150;
+
+              let currentSection = 'home';
+              
+              // Check home section first
+              if (scrollY < 100) {
+                setActiveSection('home');
+                lastScrollY = scrollY;
+                lastUpdateTime = now;
+                rafId = null;
+                return;
+              }
+
+              // Check other sections - with error handling
+              try {
+                for (const section of sections) {
+                  if (section === 'home') continue;
+                  
+                  const element = document.getElementById(section);
+                  if (element) {
+                    const { offsetTop, offsetHeight } = element;
+                    if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+                      currentSection = section;
+                      break;
+                    }
+                    if (scrollPosition >= offsetTop) {
+                      currentSection = section;
+                    }
+                  }
+                }
+                
+                setActiveSection(currentSection);
+              } catch (err) {
+                // Silently handle DOM errors during fast scroll
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn('Section detection error:', err);
+                }
+              }
+            }
+            
+            lastScrollY = scrollY;
+            lastUpdateTime = now;
+            rafId = null;
+          } catch (err) {
+            // Prevent crashes from scroll handler errors
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Scroll handler error:', err);
+            }
+            rafId = null;
+          }
+        });
+      } catch (err) {
+        // Prevent crashes from scroll event errors
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Scroll event error:', err);
+        }
+      }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial check
+    try {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      handleScroll(); // Initial check
+    } catch (err) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to add scroll listener:', err);
+      }
+    }
     
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
+      try {
+        window.removeEventListener('scroll', handleScroll);
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+        }
+      } catch (err) {
+        // Ignore cleanup errors
       }
     };
   }, []);

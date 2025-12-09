@@ -760,64 +760,106 @@ export default function Home() {
     }
   };
 
-  // Intersection Observer for scroll animations - Optimized
+  // Intersection Observer for scroll animations - Optimized with error handling
   useEffect(() => {
     // Wait for DOM to be ready
     let observer: IntersectionObserver | null = null;
+    let isActive = true;
     
     const timer = setTimeout(() => {
       try {
+        if (!isActive) return;
+        
         const observerOptions = {
           root: null,
-          rootMargin: '50px', // Start animation slightly before element is visible
-          threshold: [0, 0.1, 0.5], // Multiple thresholds for better performance
+          rootMargin: '50px',
+          threshold: [0, 0.1, 0.5],
         };
 
         const observerCallback = (entries: IntersectionObserverEntry[]) => {
-          // Use requestAnimationFrame to batch updates
-          requestAnimationFrame(() => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
-                const sectionId = entry.target.id;
-                setIsVisible((prev) => {
-                  // Only update if not already visible
-                  if (prev[sectionId as keyof typeof prev]) return prev;
-                  return {
-                    ...prev,
-                    [sectionId]: true,
-                  };
+          if (!isActive) return;
+          
+          try {
+            // Use requestAnimationFrame to batch updates
+            requestAnimationFrame(() => {
+              if (!isActive) return;
+              
+              try {
+                entries.forEach((entry) => {
+                  if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
+                    const sectionId = entry.target.id;
+                    if (sectionId) {
+                      setIsVisible((prev) => {
+                        // Only update if not already visible
+                        if (prev[sectionId as keyof typeof prev]) return prev;
+                        return {
+                          ...prev,
+                          [sectionId]: true,
+                        };
+                      });
+                      // Unobserve after first intersection
+                      try {
+                        observer?.unobserve(entry.target);
+                      } catch (err) {
+                        // Ignore unobserve errors
+                      }
+                    }
+                  }
                 });
-                // Unobserve after first intersection for better performance
-                observer?.unobserve(entry.target);
+              } catch (err) {
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn('Intersection Observer callback error:', err);
+                }
               }
             });
-          });
+          } catch (err) {
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('RAF error in Intersection Observer:', err);
+            }
+          }
         };
 
         observer = new IntersectionObserver(observerCallback, observerOptions);
         
-        // Observe all sections
-        const sections = document.querySelectorAll('section[id]');
-        sections.forEach((section) => observer?.observe(section));
+        // Observe all sections with error handling
+        try {
+          const sections = document.querySelectorAll('section[id]');
+          sections.forEach((section) => {
+            try {
+              observer?.observe(section);
+            } catch (err) {
+              // Skip sections that can't be observed
+            }
+          });
+        } catch (err) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Error observing sections:', err);
+          }
+        }
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
-          console.error('Intersection Observer error:', error);
+          console.error('Intersection Observer setup error:', error);
         }
       }
     }, 100);
 
     return () => {
+      isActive = false;
       clearTimeout(timer);
-      if (observer) {
-        observer.disconnect();
+      try {
+        if (observer) {
+          observer.disconnect();
+        }
+      } catch (err) {
+        // Ignore cleanup errors
       }
     };
   }, []);
 
-  // Handle unhandled promise rejections and errors
+  // Handle unhandled promise rejections and errors - Enhanced for mobile
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      // Prevent default error handling to avoid showing [object Event]
+      // Prevent default error handling to avoid crashes
       event.preventDefault();
       
       // Safely extract error message
@@ -841,17 +883,32 @@ export default function Home() {
     };
 
     const handleError = (event: ErrorEvent) => {
-      // Prevent default error handling
+      // Prevent default error handling and page crashes
       event.preventDefault();
-      // Silently handle - don't log to avoid console spam
+      
+      // Log in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Error caught:', event.message, event.filename);
+      }
+      
+      // Return true to prevent error from propagating
+      return true;
     };
 
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    window.addEventListener('error', handleError);
+    try {
+      window.addEventListener('unhandledrejection', handleUnhandledRejection);
+      window.addEventListener('error', handleError);
+    } catch (err) {
+      // Ignore if listeners can't be added
+    }
 
     return () => {
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-      window.removeEventListener('error', handleError);
+      try {
+        window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+        window.removeEventListener('error', handleError);
+      } catch (err) {
+        // Ignore cleanup errors
+      }
     };
   }, []);
 
