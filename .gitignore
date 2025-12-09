@@ -35,7 +35,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 tsconfig.tsbuildinfo
-next-env.d.ts
+# Keep next-env.d.ts as it's needed for TypeScript
 
 # IDE
 .vscode
