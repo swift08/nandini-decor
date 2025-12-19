@@ -12,13 +12,12 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [],
-    // Mobile optimization: Reduce quality for faster loading
-    quality: 75, // Default quality (can be overridden per image)
+    // Note: quality is set per Image component, not in config
   },
   // Production optimizations - Enhanced for mobile
   compress: true,
   poweredByHeader: false,
-  swcMinify: true, // Use SWC minifier for better performance
+  // Note: swcMinify is deprecated in Next.js 15 - SWC is now the default minifier
   reactStrictMode: true,
   // Force HTTPS in production
   async headers() {
@@ -46,9 +45,9 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
     // Disable optimizeCss - requires critters package which isn't installed
     // optimizeCss: true,
-    // Optimize server components
-    serverComponentsExternalPackages: [],
   },
+  // Server components external packages (moved from experimental in Next.js 15)
+  serverComponentsExternalPackages: [],
   // Compiler optimizations
   compiler: {
     // Remove console.log in production
