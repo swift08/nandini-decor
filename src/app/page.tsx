@@ -28,18 +28,13 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Suspense, lazy } from 'react';
+import Navbar from '@/components/Navbar';
+import ScrollProgress from '@/components/ScrollProgress';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useThrottle } from '@/hooks/useThrottle';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
-// Mobile-first: Lazy load ALL components to reduce initial bundle size
-const Navbar = dynamic(() => import('@/components/Navbar'), { 
-  ssr: false,
-  loading: () => <div className="h-16" /> // Minimal placeholder
-});
-const ScrollProgress = dynamic(() => import('@/components/ScrollProgress'), { 
-  ssr: false 
-});
+// Ultra-lazy load heavy components - No SSR, no loading state to prevent blocking
 const ImageLightbox = lazy(() => import('@/components/ImageLightbox'));
 const Floral3DBackground = lazy(() => import('@/components/Floral3DBackground'));
 
@@ -59,28 +54,20 @@ export default function Home() {
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
   const [isSlideshowPaused, setIsSlideshowPaused] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [shouldLoadHeavyComponents, setShouldLoadHeavyComponents] = useState(false);
 
   // Set mounted state immediately - no delay, no blocking
   useEffect(() => {
     setIsMounted(true);
-    // Mobile-first: Defer heavy components until after initial render
-    const timer = setTimeout(() => {
-      setShouldLoadHeavyComponents(true);
-    }, isMobile ? 1000 : 500); // Longer delay on mobile
-    
     return () => {
-      clearTimeout(timer);
       // Cleanup on unmount
       if (slideshowIntervalRef.current) {
         clearInterval(slideshowIntervalRef.current);
       }
     };
-  }, [isMobile]);
+  }, []);
 
   // Performance: Memoize static data to prevent re-creation on every render
-  // Mobile-first: Reduce slideshow images on mobile for faster loading
-  const allSlideshowImages = useMemo(() => [
+  const slideshowImages = useMemo(() => [
     '/assets/slideshow/1397a1da1a651f744843f6f2723ce1be.jpg',
     '/assets/slideshow/6d75fb4daed10738a13cb58e866173e3.jpg',
     '/assets/slideshow/81784fe61a55530952362176f387b489.jpg',
@@ -90,11 +77,6 @@ export default function Home() {
     '/assets/slideshow/WhatsApp Image 2025-11-27 at 5.29.01 PM (1).jpeg',
     '/assets/slideshow/WhatsApp Image 2025-11-27 at 5.29.01 PM.jpeg',
   ], []);
-  
-  // Mobile: Show fewer images initially, load rest after first render
-  const slideshowImages = useMemo(() => {
-    return isMobile ? allSlideshowImages.slice(0, 4) : allSlideshowImages;
-  }, [isMobile, allSlideshowImages]);
 
   // Enhanced smooth scroll optimization - One-time setup
   useEffect(() => {
@@ -119,7 +101,7 @@ export default function Home() {
         const next = (prev + 1) % slideshowImages.length;
         return next;
       });
-    }, isMobile ? 8000 : 5000); // Much slower on mobile to reduce CPU usage
+    }, isMobile ? 6000 : 5000); // Slower on mobile for better performance
 
     return () => {
       if (slideshowIntervalRef.current) {
@@ -793,7 +775,7 @@ export default function Home() {
         requestAnimationFrame(animation);
       }
     }
-  }, []);
+  };
 
   // Performance: Removed Intersection Observer - Components handle their own visibility
 
@@ -875,7 +857,7 @@ export default function Home() {
             return (
               <div
                 key={`slideshow-${index}-${image}`}
-                className={`absolute inset-0 transition-opacity ${isMobile ? 'duration-1500' : 'duration-1000'} ease-in-out ${
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
                   isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
                 }`}
                 style={{
@@ -890,7 +872,7 @@ export default function Home() {
                   fill
                   priority={index === 0}
                   loading={index === 0 ? 'eager' : 'lazy'}
-                  quality={isMobile ? (index === 0 ? 75 : 60) : (index === 0 ? 90 : 70)}
+                  quality={index === 0 ? 90 : 70}
                   className="object-cover"
                   sizes="100vw"
                   unoptimized
@@ -924,8 +906,9 @@ export default function Home() {
             >
               {/* Semi-transparent white box with border - Frosted Glass Effect */}
               <div 
-                className="relative px-8 sm:px-12 md:px-16 lg:px-20 py-8 sm:py-12 md:py-16 lg:py-20 rounded-2xl hero-glass-mobile"
-                style={{
+                className="relative px-8 sm:px-12 md:px-16 lg:px-20 py-8 sm:py-12 md:py-16 lg:py-20 rounded-2xl"
+                  className="hero-glass-mobile"
+                  style={{
                     background: isMobile ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.65)',
                     border: '1px solid rgba(200, 200, 200, 0.5)',
                     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
@@ -1090,15 +1073,13 @@ export default function Home() {
           position: 'relative',
         }}
       >
-        {/* 3D Floral Background - Lazy loaded, deferred on mobile */}
-        {shouldLoadHeavyComponents && (
-          <Suspense fallback={null}>
-            <Floral3DBackground 
-              images={slideshowImages.slice(0, 3)} 
-              intensity={isMobile ? "low" : "medium"}
-            />
-          </Suspense>
-        )}
+        {/* 3D Floral Background - Lazy loaded */}
+        <Suspense fallback={null}>
+          <Floral3DBackground 
+            images={slideshowImages.slice(0, 3)} 
+            intensity="medium"
+          />
+        </Suspense>
         {/* Dark Blue to White Gradient Overlay */}
         <div 
           className="absolute inset-0 pointer-events-none"
@@ -1179,8 +1160,8 @@ export default function Home() {
                       className="object-cover transition-transform duration-700 group-hover:scale-115"
                       priority={index === 0}
                       loading={index === 0 ? 'eager' : 'lazy'}
-                    quality={isMobile ? (index === 0 ? 75 : 60) : (index === 0 ? 85 : 70)}
-                    unoptimized={!service.image.startsWith('http')}
+                      quality={index === 0 ? 85 : 70}
+                      unoptimized={!service.image.startsWith('http')}
                       onError={(e) => {
                         if (process.env.NODE_ENV === 'development') {
                           console.error('Image failed to load:', service.image);
@@ -1262,13 +1243,11 @@ export default function Home() {
         id="portfolio" 
         className="py-8 md:py-16 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background - Deferred on mobile */}
-        {shouldLoadHeavyComponents && (
-          <Floral3DBackground 
-            images={slideshowImages.slice(1, 4)} 
-            intensity={isMobile ? "low" : "medium"}
-          />
-        )}
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(1, 4)} 
+          intensity="medium"
+        />
         {/* Dark Blue to White Gradient Overlay */}
         <div 
           className="absolute inset-0 pointer-events-none"
@@ -1333,8 +1312,8 @@ export default function Home() {
                   whileInView={{ opacity: 1, scale: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ 
-                    duration: isMobile ? 0.4 : 0.6, 
-                    delay: isMobile ? index * 0.03 : index * 0.06,
+                    duration: 0.6, 
+                    delay: index * 0.06,
                     ease: [0.25, 0.1, 0.25, 1]
                   }}
                   whileHover={{ 
@@ -1355,7 +1334,7 @@ export default function Home() {
                     className="object-cover group-hover:scale-125 transition-transform duration-700 ease-out"
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     loading="lazy"
-                    quality={isMobile ? 65 : 75}
+                    quality={75}
                     unoptimized
                     onError={(e) => {
                       if (process.env.NODE_ENV === 'development') {
@@ -1413,7 +1392,7 @@ export default function Home() {
               alt="Testimonials Background"
               fill
               className="object-cover"
-              quality={isMobile ? 75 : 90}
+              quality={90}
               priority
               unoptimized
             />
@@ -1550,13 +1529,11 @@ export default function Home() {
 
       {/* Puneeth Rajkumar Tribute Offer */}
       <section className="py-10 md:py-14 relative z-10" id="tribute">
-        {/* 3D Floral Background - Deferred on mobile */}
-        {shouldLoadHeavyComponents && (
-          <Floral3DBackground 
-            images={slideshowImages.slice(4, 7)} 
-            intensity={isMobile ? "low" : "medium"}
-          />
-        )}
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(4, 7)} 
+          intensity="medium"
+        />
         {/* Dark Blue to White Gradient Overlay */}
         <div 
           className="absolute inset-0 pointer-events-none"
@@ -1661,13 +1638,11 @@ export default function Home() {
         id="about" 
         className="py-10 md:py-16 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background - Deferred on mobile */}
-        {shouldLoadHeavyComponents && (
-          <Floral3DBackground 
-            images={[slideshowImages[5], slideshowImages[0], slideshowImages[2]]} 
-            intensity={isMobile ? "low" : "medium"}
-          />
-        )}
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={[slideshowImages[5], slideshowImages[0], slideshowImages[2]]} 
+          intensity="medium"
+        />
         {/* Decorative Floral Background Elements */}
         <div className={`absolute top-0 left-0 w-96 h-96 rounded-full -translate-x-1/2 -translate-y-1/2 ${isMobile ? '' : 'blur-3xl'}`} style={{ background: 'radial-gradient(circle, rgba(250, 209, 231, 0.3), transparent)' }} />
         <div className={`absolute bottom-0 right-0 w-96 h-96 rounded-full translate-x-1/2 translate-y-1/2 ${isMobile ? '' : 'blur-3xl'}`} style={{ background: 'radial-gradient(circle, rgba(188, 225, 241, 0.3), transparent)' }} />
@@ -1735,13 +1710,11 @@ export default function Home() {
 
       {/* Since 1993 - Business Highlights */}
       <section className="py-12 md:py-16 relative z-10" id="legacy">
-        {/* 3D Floral Background - Deferred on mobile */}
-        {shouldLoadHeavyComponents && (
-          <Floral3DBackground 
-            images={slideshowImages.slice(2, 5)} 
-            intensity={isMobile ? "low" : "medium"}
-          />
-        )}
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(2, 5)} 
+          intensity="medium"
+        />
         <div className="container mx-auto px-4 relative z-20">
           <motion.div
             className="text-center max-w-3xl mx-auto mb-10"
@@ -1766,8 +1739,9 @@ export default function Home() {
             {businessHighlights.map((highlight, index) => (
               <motion.div
                 key={highlight.title}
-                className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl section-card-hover floral-hover-glow floral-hover-swirl business-highlight-card-mobile"
-                style={{
+                className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl section-card-hover floral-hover-glow floral-hover-swirl"
+                  className="business-highlight-card-mobile"
+                  style={{
                     background: isMobile ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.95)',
                     border: '2px solid rgba(250, 209, 231, 0.4)',
                   }}
@@ -1806,13 +1780,11 @@ export default function Home() {
         id="founder"
         className="py-12 md:py-20 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background - Deferred on mobile */}
-        {shouldLoadHeavyComponents && (
-          <Floral3DBackground 
-            images={slideshowImages.slice(5, 8)} 
-            intensity={isMobile ? "low" : "medium"}
-          />
-        )}
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(5, 8)} 
+          intensity="medium"
+        />
         {/* Dark Blue to White Gradient Overlay */}
         <div 
           className="absolute inset-0 pointer-events-none"
@@ -1889,7 +1861,6 @@ export default function Home() {
                           quality={100}
                           unoptimized
                           priority={leader.name === 'Chandan C'}
-                          {...(leader.name !== 'Chandan C' ? { loading: 'lazy' as const } : {})}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             const currentSrc = target.src;
@@ -1957,13 +1928,11 @@ export default function Home() {
         id="contact" 
         className="py-8 md:py-12 relative overflow-hidden z-10"
       >
-        {/* 3D Floral Background - Deferred on mobile */}
-        {shouldLoadHeavyComponents && (
-          <Floral3DBackground 
-            images={slideshowImages.slice(1, 4)} 
-            intensity={isMobile ? "low" : "medium"}
-          />
-        )}
+        {/* 3D Floral Background */}
+        <Floral3DBackground 
+          images={slideshowImages.slice(1, 4)} 
+          intensity="medium"
+        />
         {/* Decorative Floral Elements */}
         <div className={`absolute top-0 right-0 w-96 h-96 rounded-full translate-x-1/2 -translate-y-1/2 ${isMobile ? '' : 'blur-3xl'}`} style={{ background: 'radial-gradient(circle, rgba(250, 209, 231, 0.4), transparent)' }} />
         <div className={`absolute bottom-0 left-0 w-96 h-96 rounded-full -translate-x-1/2 translate-y-1/2 ${isMobile ? '' : 'blur-3xl'}`} style={{ background: 'radial-gradient(circle, rgba(188, 225, 241, 0.3), transparent)' }} />
@@ -2464,10 +2433,10 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Animated Particles - Client-side only to avoid hydration mismatch - Reduced on mobile */}
+        {/* Animated Particles - Client-side only to avoid hydration mismatch */}
         {isMounted && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {[...Array(isMobile ? 10 : 20)].map((_, i) => {
+            {[...Array(20)].map((_, i) => {
               // Generate stable random values based on index
               const seed = i * 0.618033988749895; // Golden ratio for better distribution
               const left = ((seed * 100) % 100);
