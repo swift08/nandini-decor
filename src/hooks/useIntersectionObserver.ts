@@ -2,14 +2,14 @@ import { useEffect, useRef, useState, RefObject } from 'react';
 
 /**
  * Optimized Intersection Observer hook for lazy loading
- * Reduces re-renders and improves performance
+ * Returns a ref that can initially be null while React attaches it.
  */
 export function useIntersectionObserver(
   options: IntersectionObserverInit = {}
-): [RefObject<HTMLDivElement>, boolean] {
+): [RefObject<HTMLDivElement | null>, boolean] {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [hasIntersected, setHasIntersected] = useState(false);
-  const elementRef = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const element = elementRef.current;

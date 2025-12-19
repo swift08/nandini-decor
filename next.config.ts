@@ -2,9 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Optimize images for Vercel - Enable optimization for better mobile performance
+  
+  // Image optimization
   images: {
-    unoptimized: false, // Enable optimization for better performance
+    unoptimized: false,
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -12,12 +13,12 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  // Production optimizations - Enhanced for mobile
+  
+  // Production optimizations
   compress: true,
   poweredByHeader: false,
-  // Note: swcMinify is deprecated/ignored in Next.js 15 – SWC is the default minifier
-  // swcMinify: true,
-  // Force HTTPS in production
+  
+  // Security headers
   async headers() {
     return [
       {
@@ -31,31 +32,32 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // TypeScript and ESLint - errors are now fixed
+  
+  // TypeScript and ESLint
   typescript: {
     ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true, // Temporarily ignore ESLint during builds to avoid circular structure error
+    ignoreDuringBuilds: true,
   },
-  // Experimental features to fix chunk loading issues
+  
+  // Experimental features
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
-    // Disable optimizeCss - requires critters package which isn't installed
-    // optimizeCss: true,
   },
-  // Server external packages (Next.js 15 – renamed from serverComponentsExternalPackages)
+  
+  // Server external packages (Next.js 15)
   serverExternalPackages: [],
+  
   // Compiler optimizations
   compiler: {
-    // Remove console.log in production
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn'],
     } : false,
   },
-  // Webpack configuration - minimal to avoid chunk loading issues
+  
+  // Webpack configuration
   webpack: (config, { isServer }) => {
-    // Ensure proper module resolution for client-side
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -64,10 +66,8 @@ const nextConfig: NextConfig = {
         tls: false,
       };
     }
-
     return config;
   },
-  // Output configuration - Vercel handles this automatically, don't override
 };
 
 export default nextConfig;
