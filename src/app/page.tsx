@@ -28,13 +28,18 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Suspense, lazy } from 'react';
-import Navbar from '@/components/Navbar';
-import ScrollProgress from '@/components/ScrollProgress';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useThrottle } from '@/hooks/useThrottle';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
-// Ultra-lazy load heavy components - No SSR, no loading state to prevent blocking
+// Ultra-lazy load ALL components - No SSR, no loading state to prevent blocking
+const Navbar = dynamic(() => import('@/components/Navbar'), { 
+  ssr: false,
+  loading: () => <div className="h-16" /> // Minimal placeholder
+});
+const ScrollProgress = dynamic(() => import('@/components/ScrollProgress'), { 
+  ssr: false 
+});
 const ImageLightbox = lazy(() => import('@/components/ImageLightbox'));
 const Floral3DBackground = lazy(() => import('@/components/Floral3DBackground'));
 
@@ -872,10 +877,9 @@ export default function Home() {
                   fill
                   priority={index === 0}
                   loading={index === 0 ? 'eager' : 'lazy'}
-                  quality={index === 0 ? 90 : 70}
+                  quality={index === 0 ? 85 : 65}
                   className="object-cover"
                   sizes="100vw"
-                  unoptimized
                   style={{
                     transform: 'translate3d(0, 0, 0)',
                   }}
@@ -935,7 +939,7 @@ export default function Home() {
                         transform: 'translate3d(0, 0, 0)',
                       }}
                       priority
-                      unoptimized
+                      quality={90}
                     />
                     <div className={`absolute inset-0 bg-gold/20 rounded-full animate-pulse -z-10 ${isMobile ? '' : 'blur-2xl'}`} />
                   </div>
@@ -1160,8 +1164,7 @@ export default function Home() {
                       className="object-cover transition-transform duration-700 group-hover:scale-115"
                       priority={index === 0}
                       loading={index === 0 ? 'eager' : 'lazy'}
-                      quality={index === 0 ? 85 : 70}
-                      unoptimized={!service.image.startsWith('http')}
+                      quality={index === 0 ? 80 : 65}
                       onError={(e) => {
                         if (process.env.NODE_ENV === 'development') {
                           console.error('Image failed to load:', service.image);
@@ -1334,8 +1337,7 @@ export default function Home() {
                     className="object-cover group-hover:scale-125 transition-transform duration-700 ease-out"
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     loading="lazy"
-                    quality={75}
-                    unoptimized
+                    quality={70}
                     onError={(e) => {
                       if (process.env.NODE_ENV === 'development') {
                         console.error('Portfolio image failed to load:', image);
@@ -1392,9 +1394,8 @@ export default function Home() {
               alt="Testimonials Background"
               fill
               className="object-cover"
-              quality={90}
+              quality={85}
               priority
-              unoptimized
             />
           </motion.div>
           
@@ -1594,7 +1595,7 @@ export default function Home() {
                     alt="Puneeth Rajkumar - Power Star"
                     fill
                     className="object-cover"
-                    unoptimized
+                    quality={85}
                     onError={(e) => {
                       if (process.env.NODE_ENV === 'development') {
                         console.error('PRK photo failed to load');
@@ -1858,9 +1859,9 @@ export default function Home() {
                           fill
                           sizes="(max-width: 768px) 100vw, 320px"
                           className="object-cover object-center founder-image-clear"
-                          quality={100}
-                          unoptimized
+                          quality={90}
                           priority={leader.name === 'Chandan C'}
+                          loading={leader.name === 'Chandan C' ? 'eager' : 'lazy'}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             const currentSrc = target.src;
@@ -2212,7 +2213,8 @@ export default function Home() {
                     height={50}
                     className="w-10 h-10 md:w-12 md:h-12 object-contain rounded-full"
                     style={{ filter: 'drop-shadow(0 0 15px rgba(251, 191, 36, 0.8))' }}
-                    unoptimized
+                    quality={75}
+                    loading="lazy"
                   />
                 </motion.div>
                 <h3 className="text-3xl font-bold bg-gradient-to-r from-gold via-gold-light to-gold bg-clip-text text-transparent">
