@@ -775,7 +775,7 @@ export default function Home() {
         requestAnimationFrame(animation);
       }
     }
-  };
+  }, []);
 
   // Performance: Removed Intersection Observer - Components handle their own visibility
 
@@ -906,9 +906,8 @@ export default function Home() {
             >
               {/* Semi-transparent white box with border - Frosted Glass Effect */}
               <div 
-                className="relative px-8 sm:px-12 md:px-16 lg:px-20 py-8 sm:py-12 md:py-16 lg:py-20 rounded-2xl"
-                  className="hero-glass-mobile"
-                  style={{
+                className="relative px-8 sm:px-12 md:px-16 lg:px-20 py-8 sm:py-12 md:py-16 lg:py-20 rounded-2xl hero-glass-mobile"
+                style={{
                     background: isMobile ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.65)',
                     border: '1px solid rgba(200, 200, 200, 0.5)',
                     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset',
@@ -1739,9 +1738,8 @@ export default function Home() {
             {businessHighlights.map((highlight, index) => (
               <motion.div
                 key={highlight.title}
-                className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl section-card-hover floral-hover-glow floral-hover-swirl"
-                  className="business-highlight-card-mobile"
-                  style={{
+                className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl section-card-hover floral-hover-glow floral-hover-swirl business-highlight-card-mobile"
+                style={{
                     background: isMobile ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.95)',
                     border: '2px solid rgba(250, 209, 231, 0.4)',
                   }}
