@@ -2,23 +2,21 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Optimize images for Vercel - Mobile-first optimization
+  // Optimize images for Vercel - Enable optimization for better mobile performance
   images: {
     unoptimized: false, // Enable optimization for better performance
-    formats: ['image/webp', 'image/avif'], // Modern formats for faster loading
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920], // Mobile-first sizes
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 31536000, // 1 year cache
+    minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    remotePatterns: [],
-    // Note: quality is set per Image component, not in config
   },
   // Production optimizations - Enhanced for mobile
   compress: true,
   poweredByHeader: false,
-  // Note: swcMinify is deprecated in Next.js 15 - SWC is now the default minifier
-  reactStrictMode: true,
+  // Note: swcMinify is deprecated/ignored in Next.js 15 – SWC is the default minifier
+  // swcMinify: true,
   // Force HTTPS in production
   async headers() {
     return [
@@ -46,8 +44,8 @@ const nextConfig: NextConfig = {
     // Disable optimizeCss - requires critters package which isn't installed
     // optimizeCss: true,
   },
-  // Server components external packages (moved from experimental in Next.js 15)
-  serverComponentsExternalPackages: [],
+  // Server external packages (Next.js 15 – renamed from serverComponentsExternalPackages)
+  serverExternalPackages: [],
   // Compiler optimizations
   compiler: {
     // Remove console.log in production
