@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
   },
   
-  // Server external packages (Next.js 15)
+  // Server external packages (Next.js 15 - renamed from serverComponentsExternalPackages)
   serverExternalPackages: [],
   
   // Compiler optimizations
